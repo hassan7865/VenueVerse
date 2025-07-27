@@ -1,0 +1,195 @@
+@import url("https://fonts.googleapis.com/css2?family=KoHo:wght@700&family=Open+Sans:wght@400;500;600;700&display=swap");
+
+body {
+  @apply bg-[#f1f5f1]  min-h-screen scroll-smooth;
+}
+
+#root {
+  @apply bg-[#f1f5f1]  h-full relative;
+}
+
+.container {
+  @apply max-w-[1400px] mx-auto px-4 sm:px-10;
+}
+.search {
+  @apply input w-full h-10  mx-auto  border-2 rounded-md border-brand-blue max-w-full  sm:max-w-sm focus:outline-0 text-sm font-semibold bg-transparent text-slate-900 placeholder:text-brand-blue placeholder:font-semibold px-3;
+}
+.search_btn {
+  @apply absolute  right-0 bg-brand-blue h-full w-10 sm:w-14 sm:max-w-[56px] rounded-e-md max-w-[40px] flex items-center justify-center hover:bg-brand-blue/80 duration-300;
+}
+
+/*=================Form styles start here =========== */
+.form_input {
+  @apply py-2 border-0 border-b-[1px] border-slate-300 placeholder:font-content placeholder:font-medium placeholder:text-sm  focus:border-brand-blue focus:outline-none px-2 w-full text-sm text-slate-900 font-content font-semibold bg-white;
+}
+
+/*========tostify design==========*/
+.Toastify__toast {
+  @apply bg-brand-blue;
+}
+.Toastify__toast-body {
+  @apply text-white;
+}
+.Toastify__close-button > svg {
+  @apply text-white;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.slick-dots li {
+  @apply bg-white rounded-full;
+}
+.post_container .slick-list {
+  @apply pb-11 sm:pb-16;
+}
+.post_container .slick-slide {
+  @apply p-3;
+}
+
+.chats_container {
+  height: calc(100vh - 75px);
+}
+.message_container {
+  height: calc(100vh - 200px);
+}
+
+/* Universal Styles */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  @apply text-[#1f2937];
+}
+p,
+label,
+li,
+span {
+  @apply text-[#1f2937];
+}
+.label-text {
+  @apply !text-[#1f2937];
+}
+button > span {
+  @apply text-white;
+}
+input {
+  background-color: white !important;
+  color: black !important;
+}
+
+select{
+  color: black !important;
+}
+
+option{
+  color: black  !important;
+}
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: white;
+  border: 2px solid gray;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Show checkmark when checked */
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: solid black;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: white;
+  border: 2px solid gray;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+}
+
+
+input[type="radio"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  background-color: black;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+
+.non-operational-day {
+  background-color: #f8d7da !important; /* light red/pink background */
+  opacity: 0.6;
+}
+
+
+/* FullCalendar button base */
+.fc .fc-button {
+  @apply bg-white border mt-2 border-gray-300 text-sm text-gray-700 rounded-md px-3 py-1 hover:bg-blue-100 transition-all shadow-sm;
+}
+
+/* Primary buttons (e.g., Today) */
+.fc .fc-button-primary {
+  @apply bg-brand-blue text-white hover:bg-brand-blue;
+}
+
+/* Hover for non-active primary buttons */
+.fc .fc-button-primary:not(.fc-button-active):hover {
+  @apply bg-brand-blue;
+}
+
+/* Active button style */
+.fc .fc-button-active {
+  @apply bg-brand-blue text-white;
+}
+
+/* Button group spacing */
+.fc .fc-button-group {
+  @apply flex gap-1;
+}
+
+/* Responsive tweaks: hide view buttons on very small screens */
+@media (max-width: 640px) {
+  .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) {
+    display: none; /* Hide "month/week/day" on mobile */
+  }
+
+  .fc .fc-button {
+    @apply text-xs px-2 py-1;
+  }
+
+  .fc .fc-toolbar-title {
+    @apply text-base;
+  }
+}
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
