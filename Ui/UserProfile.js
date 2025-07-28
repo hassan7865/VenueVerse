@@ -7,16 +7,20 @@ const GetUserData = () => {
     return user ? JSON.parse(user).user : null; 
 };
 
-const UpdateUserData=(userData)=>{
-   
-    const user = GetUserData()
-    user.avatar = userData.avatar
-    user.username = userData.username
-    user.email = userData.email
+const UpdateUserData = (userData) => {
+  const raw = localStorage.getItem("venue_venture_user_data");
+  if (!raw) return;
+
+  const parsed = JSON.parse(raw);
+  parsed.user = {
+    ...parsed.user,
+    ...userData,
+  };
 
   
-    SetUserData(user)
-}
+  localStorage.setItem("venue_venture_user_data", JSON.stringify(parsed));
+};
+
 
 const DeleteUser=()=>{
     localStorage.removeItem("venue_venture_user_data")

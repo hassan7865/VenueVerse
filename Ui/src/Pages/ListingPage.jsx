@@ -5,6 +5,7 @@ import api from "../lib/Url";
 import UserProfile from "../../UserProfile";
 import Loading from "../Components/Loading";
 import ListingDetails from "../Components/ListingDetail";
+import { showConfirmationToast } from "../Components/DeleteComponent";
 
 const ListingPage = () => {
   const [listings, setListings] = useState({});
@@ -75,31 +76,35 @@ const ListingPage = () => {
 
  
 
-  const handlePostDelete = async () => {
-    const isVerified = window.confirm(
-      "Are you sure you want to delete this listing?"
-    );
-    if (isVerified) {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/post/${listings._id}`, {
-          method: "DELETE",
-        });
-
-        if (!res.ok) {
-          toast.error("Error occurred while deleting");
-        } else {
-          toast.success("Listing deleted successfully");
-          navigate("/profile");
-        }
-      } catch (error) {
-        toast.error("An error occurred");
-      } finally {
-        setLoading(false);
-      }
+  const handlePostDelete = async (venueId, type) => {
+    const isConfirmed = await showConfirmationToast({
+      title: 'Delete Confirmation',
+      message: `Are you sure you want to delete this ${type}? This action cannot be undone.`,
+      variant: 'danger',
+      confirmText: 'Yes, Delete',
+      cancelText: 'Cancel',
+      onConfirm: () => console.log(`Confirmed deletion of ${type}`),
+      onCancel: () => console.log(`Cancelled deletion of ${type}`)
+    });
+  
+    if (!isConfirmed) return;
+  
+    setLoading(true);
+    const toastId = toast.loading(`Deleting ${type}...`);
+  
+    try {
+      await api.delete(`/post/${venueId}`);
+      toast.success(`${type} deleted successfully`);
+      navigate("/listing")
+    } catch (error) {
+      console.error(`Error deleting ${type}:`, error);
+      const message =
+        error.response?.data?.message || `Failed to delete ${type}`;
+      toast.error(message, { id: toastId });
+    } finally {
+      setLoading(false);
     }
   };
-
 
 
   const handleStartChat = () => {

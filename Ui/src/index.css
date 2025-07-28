@@ -85,6 +85,11 @@ input {
   color: black !important;
 }
 
+textarea{
+    background-color: white !important;
+  color: black !important;
+}
+
 select{
   color: black !important;
 }

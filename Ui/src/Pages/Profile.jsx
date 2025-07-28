@@ -1,325 +1,327 @@
-import { React, useEffect, useState } from "react";
-import { AiOutlineShop, AiOutlineHome } from "react-icons/ai";
-import { BsFillPlusSquareFill } from "react-icons/bs";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
-import Loading from "../Components/Loading.jsx";
-import Footer from "../Components/Footer.jsx";
-import UserProfile from "../../UserProfile.js";
-import PostCard from "../components/PostCard.jsx";
-import api from "../lib/Url.js";
-import ProductCard from "../Components/Shop/ProductCard.jsx";
+import { useState, useEffect } from "react";
+import {
+  FiEdit2,
+  FiSave,
+  FiX,
+  FiUser,
+  FiMail,
+  FiFileText,
+  FiCamera,
+} from "react-icons/fi";
+import { toast } from "react-hot-toast";
+import Loading from "../Components/Loading";
+import api from "../lib/Url";
+import UserProfile from "../../UserProfile";
 
-const Profile = () => {
+const ProfilePage = () => {
+  const [userData, setUserData] = useState({
+    username: "",
+    email: "",
+    bio: "",
+  });
+
+  const [editMode, setEditMode] = useState({
+    bio: false,
+  });
+
+  const [tempData, setTempData] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingProfilePic, setIsUpdatingProfilePic] = useState(false);
   const currentUser = UserProfile.GetUserData();
-  const [venues, setVenues] = useState([]);
-  const [shopItems, setShopItems] = useState([]);
-  const [activeTab, setActiveTab] = useState("venues");
-  const [venuesLoading, setVenuesLoading] = useState(false);
-  const [shopItemsLoading, setShopItemsLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
 
-  const loadVenues = async () => {
-    setVenuesLoading(true);
+  const fetchUserData = async () => {
     try {
-      const res = await api.get(`/post/user/${currentUser._id}`);
-      setVenues(res.data);
-    } catch (err) {
-      const message = err.response?.data?.message || "Error loading posts";
-      toast.error(message);
+      setIsLoading(true);
+      const response = await api.get(`/user/${currentUser._id}`);
+      setUserData(response.data);
+    } catch (error) {
+      toast.error("Failed to fetch profile data");
+      console.error("Error fetching user data:", error);
     } finally {
-      setVenuesLoading(false);
+      setIsLoading(false);
     }
   };
-
-  const loadShopItems = async () => {
-    setShopItemsLoading(true);
-    try {
-      const res = await api.get(`/product/user/${currentUser._id}`);
-      setShopItems(res.data);
-    } catch (err) {
-      const message = err.response?.data?.message || "Error loading posts";
-      toast.error(message);
-    } finally {
-      setShopItemsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadVenues();
-    loadShopItems();
+    fetchUserData();
   }, []);
 
-  const handlePostDelete = async (venueId, type) => {
-    const isConfirmed = await new Promise((resolve) => {
-      toast(
-        (t) => (
-          <span
-            style={{ display: "block", fontFamily: "sans-serif", fontSize: 15 }}
-          >
-            Are you sure you want to delete this <strong>{type}</strong>?
-            <div
-              style={{
-                marginTop: 16,
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 12,
-              }}
-            >
-              <button
-                onClick={() => {
-                  resolve(true);
-                  toast.dismiss(t.id);
-                }}
-                style={{
-                  backgroundColor: "#e53935",
-                  color: "#fff",
-                  border: "none",
-                  padding: "6px 14px",
-                  borderRadius: 4,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
-              >
-                Yes, Delete
-              </button>
-              <button
-                onClick={() => {
-                  resolve(false);
-                  toast.dismiss(t.id);
-                }}
-                style={{
-                  backgroundColor: "#f1f1f1",
-                  color: "#333",
-                  border: "1px solid #ccc",
-                  padding: "6px 14px",
-                  borderRadius: 4,
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </span>
-        ),
-        { duration: Infinity }
-      );
-    });
+  // Handle edit button click
+  const handleEdit = (field) => {
+    setTempData({ ...tempData, [field]: userData[field] });
+    setEditMode({ ...editMode, [field]: true });
+  };
 
-    if (!isConfirmed) return;
+  // Handle cancel edit
+  const handleCancel = (field) => {
+    setEditMode({ ...editMode, [field]: false });
+  };
 
-    setLoading(true);
-    const toastId = toast.loading(`Deleting ${type}...`);
+  // Handle save changes
+  const handleSave = async (field) => {
+    if (!tempData[field] || tempData[field] === userData[field]) {
+      setEditMode({ ...editMode, [field]: false });
+      return;
+    }
 
+    setIsSaving(true);
     try {
-      await api.delete(`/post/${venueId}`);
-      toast.success(`${type} deleted successfully`, { id: toastId });
-      loadVenues(); // Refresh your venues list
+      const response = await api.put(`/user/${currentUser._id}`, {
+        [field]: tempData[field],
+      });
+
+      setUserData((prev) => ({
+        ...prev,
+        [field]: response.data[field],
+      }));
+      setEditMode({ ...editMode, [field]: false });
+      toast.success("Profile updated successfully");
     } catch (error) {
-      console.error(`Error deleting ${type}:`, error);
-      const message =
-        error.response?.data?.message || `Failed to delete ${type}`;
-      toast.error(message, { id: toastId });
+      toast.error("Failed to update profile");
+      console.error("Error updating profile:", error);
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const handleShopItemDelete = async (itemId) => {
-    const confirm = await new Promise((resolve) => {
-      toast(
-        (t) => (
-          <span>
-            Are you sure you want to delete this item?
-            <div style={{ marginTop: "10px" }}>
-              <button
-                onClick={() => {
-                  resolve(true);
-                  toast.dismiss(t.id);
-                }}
-                style={{
-                  marginRight: "10px",
-                  color: "white",
-                  background: "red",
-                  padding: "5px 10px",
-                  border: "none",
-                  borderRadius: "3px",
-                }}
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => {
-                  resolve(false);
-                  toast.dismiss(t.id);
-                }}
-                style={{ padding: "5px 10px", borderRadius: "3px" }}
-              >
-                Cancel
-              </button>
-            </div>
-          </span>
-        ),
-        { duration: Infinity }
-      );
-    });
+  // Handle profile picture upload
+  const handleProfilePicUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    if (!confirm) return;
+    if (!file.type.match("image.*")) {
+      toast.error("Please select an image file");
+      return;
+    }
 
-    setLoading(true);
-    const toastId = toast.loading("Deleting item...");
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image size should be less than 2MB");
+      return;
+    }
+
+    const uploadFormData = new FormData();
+    uploadFormData.append("images", file); // backend expects 'images' key, even for single file
+
+    setIsUpdatingProfilePic(true);
 
     try {
-      await api.delete(`/shop/${itemId}`);
-      toast.success("Item deleted successfully", { id: toastId });
+      // Step 1: Upload to /storage/upload
+      const uploadResponse = await api.post("/storage/upload", uploadFormData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const uploadedImageUrl = uploadResponse.data.images[0]?.path;
+
+      if (!uploadedImageUrl) {
+        throw new Error("No image URL returned from upload");
+      }
+
+      // Step 2: Update user's avatar with uploaded image URL
+      const updateResponse = await api.put(`/user/${currentUser._id}`, {
+        avatar: uploadedImageUrl,
+      });
+
+      setUserData((prev) => ({
+        ...prev,
+        avatar: updateResponse.data.avatar,
+      }));
+
+      toast.success("Profile picture updated successfully");
+      UserProfile.UpdateUserData({avatar:uploadedImageUrl})
     } catch (error) {
-      console.error("Delete error:", error);
-      const message = error.response?.data?.message || "Failed to delete item";
-      toast.error(message, { id: toastId });
+      toast.error("Failed to update profile picture");
+      console.error("Error updating profile picture:", error);
     } finally {
-      setLoading(false);
+      setIsUpdatingProfilePic(false);
     }
   };
+
+  // Handle input changes
+  const handleChange = (field, value) => {
+    setTempData({ ...tempData, [field]: value });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Main Content */}
-        <div className="bg-white rounded-xl shadow-md overflow-hidden">
-          {/* Tabs */}
-          <div className="flex border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab("venues")}
-              className={`px-6 py-3 font-medium text-sm flex items-center ${activeTab === "venues" ? "text-brand-blue border-b-2 border-brand-blue" : "text-gray-500 hover:text-gray-700"}`}
-            >
-              <AiOutlineHome className="mr-2" />
-              My Venues
-            </button>
-            <button
-              onClick={() => setActiveTab("shop")}
-              className={`px-6 py-3 font-medium text-sm flex items-center ${activeTab === "shop" ? "text-brand-blue border-b-2 border-brand-blue" : "text-gray-500 hover:text-gray-700"}`}
-            >
-              <AiOutlineShop className="mr-2" />
-              Shop Items
-            </button>
-          </div>
-
-          {/* Content Area */}
-          <div className="p-6">
-            {activeTab === "venues" ? (
-              <>
-                {venuesLoading ? (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <Loading />
-                    <p className="mt-4 text-brand-blue font-medium">
-                      Loading your venues...
-                    </p>
-                  </div>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 h-40 relative">
+        {/* Profile Picture */}
+        <div className="absolute -bottom-12 left-8">
+          <div className="relative group">
+            <label htmlFor="profile-pic-upload" className="cursor-pointer">
+              <div className="w-24 h-24 bg-white rounded-full shadow-lg border-4 border-white">
+                {userData.avatar ? (
+                  <img
+                    src={userData.avatar}
+                    alt="Profile"
+                    className="w-full h-full rounded-full object-cover"
+                  />
                 ) : (
-                  <div className="space-y-6">
-                    <button
-                      onClick={() => navigate("/create_post")}
-                      className="flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-brand-blue hover:bg-blue-50 transition-colors mb-6"
-                    >
-                      <BsFillPlusSquareFill
-                        className="text-brand-blue mr-2"
-                        size={20}
-                      />
-                      <span className="font-medium text-brand-blue">
-                        Add New Venue
-                      </span>
-                    </button>
-
-                    {venues.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {venues.map((venue) => (
-                          <PostCard
-                            key={venue._id}
-                            postInfo={{
-                              post: {
-                                ...venue,
-                                title: venue.name,
-                                description: venue.description,
-                                image:
-                                  venue.images?.[0] || "/default-venue.jpg",
-                              },
-                              handlePostDelete: handlePostDelete,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <p className="text-gray-500">
-                          You haven't added any venues yet.
-                        </p>
-                        <button
-                          onClick={() => navigate("/create_post")}
-                          className="mt-4 text-brand-blue font-medium hover:underline"
-                        >
-                          Add your first venue
-                        </button>
-                      </div>
-                    )}
+                  <div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center overflow-hidden">
+                    <FiUser className="w-10 h-10 text-gray-400" />
                   </div>
                 )}
-              </>
-            ) : (
-              <>
-                {shopItemsLoading ? (
-                  <div className="flex flex-col items-center justify-center py-12">
-                    <Loading />
-                    <p className="mt-4 text-brand-blue font-medium">
-                      Loading your shop items...
-                    </p>
-                  </div>
+              </div>
+              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {isUpdatingProfilePic ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
-                  <div className="space-y-6">
-                    <button
-                      onClick={() => navigate("/create_shopitem")}
-                      className="flex items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-brand-blue hover:bg-blue-50 transition-colors mb-6"
-                    >
-                      <BsFillPlusSquareFill
-                        className="text-brand-blue mr-2"
-                        size={20}
-                      />
-                      <span className="font-medium  text-brand-blue">
-                        Add New Shop Item
-                      </span>
-                    </button>
-
-                    {shopItems.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {shopItems.map((item) => (
-                          <ProductCard product={item} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-12">
-                        <p className="text-gray-500">
-                          You haven't added any shop items yet.
-                        </p>
-                        <button
-                          onClick={() => navigate("/create_shop_item")}
-                          className="mt-4 text-brand-blue font-medium hover:underline"
-                        >
-                          Add your first item
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                  <FiCamera className="w-5 h-5 text-white" />
                 )}
-              </>
-            )}
+              </div>
+            </label>
+            <input
+              id="profile-pic-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleProfilePicUpload}
+              disabled={isUpdatingProfilePic}
+            />
           </div>
         </div>
       </div>
 
-      <Footer />
+      {/* Content */}
+      <div className="pt-16 px-4 sm:px-8 max-w-6xl mx-auto">
+        {/* User Info */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+            {userData.username}
+          </h1>
+          <p className="text-gray-600">{userData.email}</p>
+        </div>
+
+        {/* Profile Details */}
+        <div className="bg-white border border-gray-200 rounded-lg divide-y divide-gray-200">
+          {/* Username */}
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <FiUser className="w-5 h-5 text-gray-400" />
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">
+                    Username
+                  </dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {userData.username}
+                  </dd>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <FiMail className="w-5 h-5 text-gray-400" />
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">
+                    Email address
+                  </dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {userData.email}
+                  </dd>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bio */}
+          <div className="p-4 sm:p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-3 flex-1">
+                <FiFileText className="w-5 h-5 text-gray-400 mt-0.5" />
+                <div className="flex-1">
+                  <dt className="text-sm font-medium text-gray-500">Bio</dt>
+                  {!editMode.bio ? (
+                    <div className="mt-1 text-sm text-gray-900 leading-relaxed whitespace-pre-line">
+                      {userData.bio || "No bio provided"}
+                    </div>
+                  ) : (
+                    <div className="mt-2">
+                      <textarea
+                        rows={4}
+                         value={tempData.bio !== undefined ? tempData.bio : userData.bio}
+                        onChange={(e) => handleChange("bio", e.target.value)}
+                        className="block w-full border border-gray-300 rounded-md px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        placeholder="Tell us about yourself..."
+                      />
+                      <div className="mt-3 flex justify-end space-x-3">
+                        <button
+                          onClick={() => handleCancel("bio")}
+                          className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          disabled={isSaving}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleSave("bio")}
+                          disabled={
+                            isSaving ||
+                            !tempData.bio ||
+                            tempData.bio === userData.bio
+                          }
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                        >
+                          {isSaving ? (
+                            <>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Saving...
+                            </>
+                          ) : (
+                            "Save"
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {!editMode.bio && (
+                <button
+                  onClick={() => handleEdit("bio")}
+                  className="ml-3 p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded"
+                >
+                  <FiEdit2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Profile;
+export default ProfilePage;

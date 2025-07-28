@@ -8,8 +8,7 @@ const router = express.Router();
 
 router.post("/create", verifyToken, async (req, res, next) => {
   try {
-    const { type, venueId, serviceId, startTime, endTime, notes } = req.body;
-    const userId = req.user._id;
+    const { type, venueId, serviceId, startTime, endTime, notes,userId } = req.body;
 
     if (!type || !["venue", "service"].includes(type)) {
       return next(throwError(400, "Invalid or missing booking type."));

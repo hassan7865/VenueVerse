@@ -24,7 +24,7 @@ const SignIn = () => {
 
       UserProfile.SetUserData(user);
       toast.success("Signed in successfully!");
-      navigate("/home");
+      navigate("/home", { replace: true });
     } catch (error) {
       let message = "Network error, please try again";
 

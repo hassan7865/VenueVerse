@@ -8,8 +8,7 @@ import { TrashIcon, X } from "lucide-react";
 import { BsPencilSquare } from "react-icons/bs";
 import api from "../lib/Url";
 
-const BookingDialog = ({ isOpen, closeModal, id, operationHours,type }) => {
-   
+const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operationDays }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
@@ -24,6 +23,13 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours,type }) => {
     endTime: new Date(new Date().setHours(new Date().getHours() + 1)),
     notes: "",
   });
+
+  // Check if selected day is operational
+  const isOperationalDay = () => {
+    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+    console.log(dayName,operationDays)
+    return operationDays?.includes(dayName);
+  };
 
   // Fetch events for selected date
   const fetchEvents = async () => {
@@ -90,8 +96,8 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours,type }) => {
       const bookingData = {
         userId: selectedUser.value,
         type,
-        venueId:type == "venue"?id:undefined,
-        serviceId:type == 'service'?id:undefined,
+        venueId: type == "venue" ? id : undefined,
+        serviceId: type == 'service' ? id : undefined,
         startTime: formData.startTime,
         endTime: formData.endTime,
         notes: formData.notes,
@@ -160,7 +166,6 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours,type }) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Load events when date changes
   useEffect(() => {
     if (isOpen) {
       fetchEvents();
@@ -179,18 +184,19 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours,type }) => {
   }, [searchInput]);
 
   const parseTime = (timeStr) => {
-    if(timeStr){
-        const [hours, minutes] = timeStr?.split(":").map(Number);
-    return new Date(0, 0, 0, hours, minutes);
+    if (timeStr) {
+      const [hours, minutes] = timeStr?.split(":").map(Number);
+      return new Date(0, 0, 0, hours, minutes);
     }
-    
   };
 
   const minTime = parseTime(operationHours.open);
   const maxTime =
     operationHours.close === "00:00"
-      ? new Date(0, 0, 1, 0, 0) // Midnight next day
+      ? new Date(0, 0, 1, 0, 0) 
       : parseTime(operationHours.close);
+
+  const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
 
   return (
     <Transition appear show={isOpen} as={React.Fragment}>
@@ -322,105 +328,132 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours,type }) => {
                     </div>
                   </div>
 
-                  {/* Right Column - Booking Form */}
+                  {/* Right Column - Booking Form or Not Operational Message */}
                   <div className="w-full lg:w-1/2 p-4 sm:p-6">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                      {/* User Selection */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Select User
-                        </label>
-                        <Select
-                          options={users}
-                          value={selectedUser}
-                          onChange={handleUserChange}
-                          onInputChange={setSearchInput}
-                          placeholder="Search by email..."
-                          isClearable
-                          required
-                          className="text-sm"
-                        />
-                      </div>
-
-                      {/* Time Selection */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {isOperationalDay() ? (
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* User Selection */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Start Time
+                            Select User
                           </label>
-                          <DatePicker
-                            selected={formData.startTime}
-                            onChange={(date) =>
-                              handleTimeChange(date, "startTime")
-                            }
-                            showTimeSelect
-                            showTimeSelectOnly
-                            timeIntervals={15}
-                            timeCaption="Time"
-                            minTime={minTime}
-                            maxTime={maxTime}
-                            dateFormat="h:mm aa"
-                            className="border rounded-md p-2 w-full text-sm"
+                          <Select
+                            options={users}
+                            value={selectedUser}
+                            onChange={handleUserChange}
+                            onInputChange={setSearchInput}
+                            placeholder="Search by email..."
+                            isClearable
                             required
+                            className="text-sm"
                           />
                         </div>
+
+                        {/* Time Selection */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Start Time
+                            </label>
+                            <DatePicker
+                              selected={formData.startTime}
+                              onChange={(date) =>
+                                handleTimeChange(date, "startTime")
+                              }
+                              showTimeSelect
+                              showTimeSelectOnly
+                              timeIntervals={15}
+                              timeCaption="Time"
+                              minTime={minTime}
+                              maxTime={maxTime}
+                              dateFormat="h:mm aa"
+                              className="border rounded-md p-2 w-full text-sm"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              End Time
+                            </label>
+                            <DatePicker
+                              selected={formData.endTime}
+                              onChange={(date) =>
+                                handleTimeChange(date, "endTime")
+                              }
+                              showTimeSelect
+                              showTimeSelectOnly
+                              timeIntervals={15}
+                              timeCaption="Time"
+                              dateFormat="h:mm aa"
+                              minTime={minTime}
+                              maxTime={maxTime}
+                              className="border rounded-md p-2 w-full text-sm"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        {/* Notes */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            End Time
+                            Notes
                           </label>
-                          <DatePicker
-                            selected={formData.endTime}
-                            onChange={(date) =>
-                              handleTimeChange(date, "endTime")
-                            }
-                            showTimeSelect
-                            showTimeSelectOnly
-                            timeIntervals={15}
-                            timeCaption="Time"
-                            dateFormat="h:mm aa"
-                            minTime={minTime}
-                            maxTime={maxTime}
-                            className="border rounded-md p-2 w-full text-sm"
-                            required
+                          <textarea
+                            name="notes"
+                            value={formData.notes}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className="border rounded-md p-2 w-full bg-white border-gray-300 text-black text-sm resize-none"
+                            placeholder="Add any additional notes..."
                           />
                         </div>
-                      </div>
 
-                      {/* Notes */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Notes
-                        </label>
-                        <textarea
-                          name="notes"
-                          value={formData.notes}
-                          onChange={handleInputChange}
-                          rows={3}
-                          className="border rounded-md p-2 w-full bg-white border-gray-300 text-black text-sm resize-none"
-                          placeholder="Add any additional notes..."
-                        />
+                        {/* Form Actions */}
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              closeModal();
+                              resetForm();
+                            }}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-blue hover:bg-brand-blue focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                          >
+                            {isEditing ? "Update Booking" : "Create Booking"}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <div className="bg-red-50 border-l-4 border-red-500 p-4 w-full">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <X className="h-5 w-5 text-red-500" />
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm text-red-700">
+                                {dayName} is not an operational day. Please select a different date.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-8">
+                          <h4 className="font-medium text-gray-900 mb-2">
+                            Operational Days:
+                          </h4>
+                          <ul className="list-disc pl-5 text-sm text-gray-700">
+                            {operationDays?.map((day, index) => (
+                              <li key={index}>{day}</li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-
-                      {/* Form Actions */}
-                      <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 mt-6">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            closeModal();
-                            resetForm();
-                          }}
-                          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="submit"
-                          className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-blue hover:bg-brand-blue focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-                        >
-                          {isEditing ? "Update Booking" : "Create Booking"}
-                        </button>
-                      </div>
-                    </form>
+                    )}
                   </div>
                 </div>
               </Dialog.Panel>

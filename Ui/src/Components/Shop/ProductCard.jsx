@@ -11,7 +11,7 @@ import { FaBoxesStacked } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import UserProfile from "../../../UserProfile";
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, handleShopItemDelete }) => {
   const {
     name,
     description,
@@ -123,7 +123,7 @@ const ProductCard = ({ product }) => {
             </div>
           )}
         </div>
-        {currentUser._id == userId && (
+        {currentUser?._id == userId && (
           <div className="mt-5 flex flex-col sm:flex-row gap-3">
             <button
               onClick={(e) => {
@@ -138,7 +138,7 @@ const ProductCard = ({ product }) => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                console.log("Delete product:", _id);
+                handleShopItemDelete(_id)
               }}
               className="flex w-full sm:w-auto items-center justify-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors"
             >

@@ -84,19 +84,69 @@ route.delete("/:id", verifyToken, async (req, res, next) => {
 // Get All Products with optional category filter
 route.get("/", async (req, res, next) => {
   try {
-    const { category } = req.query;
+    const { 
+      searchTerm, 
+      category, 
+      sortBy, 
+      inStock,
+      page = 1,
+      limit = 12
+    } = req.query;
 
-    const filter = category ? { category } : {};
-    const products = await Product.find(filter).sort({ createdAt: -1 });
+    // Build filter object
+    const filter = {};
 
-    return res.status(200).json(products);
+    // Search term filter (case insensitive)
+    if (searchTerm) {
+      filter.$or = [
+        { name: { $regex: searchTerm, $options: 'i' } },
+        { description: { $regex: searchTerm, $options: 'i' } }
+      ];
+    }
+
+    // Category filter
+    if (category && category !== 'all') {
+      filter.category = category;
+    }
+
+    // In stock filter
+    if (inStock === 'true') {
+      filter.stock = { $gt: 0 };
+    }
+
+    // Sorting
+    let sortOption = { createdAt: -1 }; // Default: newest first
+    if (sortBy === 'price-low-high') {
+      sortOption = { price: 1 }; // Price: Low to High
+    } else if (sortBy === 'price-high-low') {
+      sortOption = { price: -1 }; // Price: High to Low
+    }
+
+    // Pagination
+    const skip = (page - 1) * limit;
+    const total = await Product.countDocuments(filter);
+
+    // Execute query
+    const products = await Product.find(filter)
+      .sort(sortOption)
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Calculate total pages
+    const totalPages = Math.ceil(total / limit);
+
+    return res.status(200).json({
+      products,
+      currentPage: parseInt(page),
+      totalPages,
+      total
+    });
   } catch (err) {
     next(err);
   }
 });
 
-// Get Products by User ID
-route.get("/user/:userId", verifyToken, async (req, res, next) => {
+route.get("/user/:userId", async (req, res, next) => {
   try {
     const products = await Product.find({ userId: req.params.userId }).sort({
       createdAt: -1,

@@ -73,105 +73,105 @@ const UpdatePost = () => {
   const watchOffer = watch("offer");
 
   useEffect(() => {
-  const fetchPostData = async () => {
-    setDataLoading(true);
-    try {
-      const res = await api.get(`/post/${params.id}`);
+    const fetchPostData = async () => {
+      setDataLoading(true);
+      try {
+        const res = await api.get(`/post/${params.id}`);
 
-      reset({
-        title: res.data.title,
-        description: res.data.description,
-        type: res.data.type,
-        address: res.data.address || "",
-        area: res.data.area || "",
-        capacity: res.data.capacity || "",
-        venuetype: res.data.venuetype || "",
-        offer: res.data.offer || false,
-        price: res.data.price || "",
-        discountPrice: res.data.discountPrice || "",
-        operationDays: res.data.operationDays || [],
-        operationHours: res.data.operationHours || { open: "", close: "" },
-      });
+        reset({
+          title: res.data.title,
+          description: res.data.description,
+          type: res.data.type,
+          address: res.data.address || "",
+          area: res.data.area || "",
+          capacity: res.data.capacity || "",
+          venuetype: res.data.venuetype || "",
+          offer: res.data.offer || false,
+          price: res.data.price || "",
+          discountPrice: res.data.discountPrice || "",
+          operationDays: res.data.operationDays || [],
+          operationHours: res.data.operationHours || { open: "", close: "" },
+        });
 
-      setUploadedImages(res.data.imgUrl || []);
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message || "An error occurred");
-    } finally {
-      setDataLoading(false);
-    }
-  };
+        setUploadedImages(res.data.imgUrl || []);
+      } catch (error) {
+        toast.error(error.response?.data?.message || error.message || "An error occurred");
+      } finally {
+        setDataLoading(false);
+      }
+    };
 
-  fetchPostData();
-}, [params.id, reset]);
+    fetchPostData();
+  }, [params.id, reset]);
 
   const handleImageUpload = async (e) => {
-  e.preventDefault();
-  if (!imageFile.length) return;
+    e.preventDefault();
+    if (!imageFile.length) return;
 
-  setLoading(true);
-  const uploadFormData = new FormData();
-  
-  for (let i = 0; i < imageFile.length; i++) {
-    uploadFormData.append("images", imageFile[i]);
-  }
+    setLoading(true);
+    const uploadFormData = new FormData();
+    
+    for (let i = 0; i < imageFile.length; i++) {
+      uploadFormData.append("images", imageFile[i]);
+    }
 
-  try {
-    const response = await api.post('/storage/upload', uploadFormData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    try {
+      const response = await api.post('/storage/upload', uploadFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    setUploadedImages(prev => [...prev, ...response.data.images]);
-    setImageFile([]);
-  } catch (error) {
-    toast.error(error.response?.data?.message || error.message || "Image upload failed");
-  } finally {
-    setLoading(false);
-  }
-};
+      setUploadedImages(prev => [...prev, ...response.data.images]);
+      setImageFile([]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Image upload failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteImage = (index) => {
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
 
- const onSubmit = async (data) => {
-  
-  if (uploadedImages.length < 1) {
-    toast.error("Please upload at least one image", { position: "top-right" });
-    return;
-  }
-
-  try {
-    setFormSubmitLoading(true);
-
-    const postData = {
-      ...data,
-      imgUrl: uploadedImages,
-      userId: currentUser._id,
-    };
-
-    if (data.type === "service") {
-      delete postData.address;
-      delete postData.area;
-      delete postData.capacity;
-      delete postData.venuetype;
+  const onSubmit = async (data) => {
+    if (uploadedImages.length < 1) {
+      toast.error("Please upload at least one image", { position: "top-right" });
+      return;
     }
 
-    const res = await api.put(`/post/${params.id}`, postData);
+    try {
+      setFormSubmitLoading(true);
 
-    navigate(`/listing/${res.data._id}`);
+      const postData = {
+        ...data,
+        imgUrl: uploadedImages,
+        userId: currentUser._id,
+      };
 
-    toast.success("Listing updated successfully!");
-  } catch (error) {
-    toast.error(
-      error.response?.data?.message || error.message || "An error occurred",
-      { position: "top-right" }
-    );
-  } finally {
-    setFormSubmitLoading(false);
-  }
-};
+      if (data.type === "service") {
+        delete postData.address;
+        delete postData.area;
+        delete postData.capacity;
+        delete postData.venuetype;
+      }
+
+      const res = await api.put(`/post/${params.id}`, postData);
+
+      navigate(`/listing/${res.data._id}`);
+
+      toast.success("Listing updated successfully!");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || error.message || "An error occurred",
+        { position: "top-right" }
+      );
+    } finally {
+      setFormSubmitLoading(false);
+    }
+  };
+
   if (dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -245,7 +245,15 @@ const UpdatePost = () => {
                         placeholder="Enter your listing title"
                         className="w-full bg-white px-4 py-3 border border-slate-500 rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors text-slate-900 placeholder-slate-400"
                         {...register("title", {
-                          required: "This field is required*",
+                          required: "Title is required",
+                          minLength: {
+                            value: 5,
+                            message: "Title must be at least 5 characters"
+                          },
+                          maxLength: {
+                            value: 100,
+                            message: "Title must not exceed 100 characters"
+                          }
                         })}
                       />
                       {errors.title && (
@@ -265,7 +273,15 @@ const UpdatePost = () => {
                         placeholder="Describe your service or venue in detail"
                         className="w-full px-4 py-3 border bg-white border-slate-500 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors text-slate-900 placeholder-slate-400 resize-none"
                         {...register("description", {
-                          required: "This field is required*",
+                          required: "Description is required",
+                          minLength: {
+                            value: 20,
+                            message: "Description must be at least 20 characters"
+                          },
+                          maxLength: {
+                            value: 1000,
+                            message: "Description must not exceed 1000 characters"
+                          }
                         })}
                       />
                       {errors.description && (
@@ -371,48 +387,86 @@ const UpdatePost = () => {
                     <div className="p-6 space-y-6">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Address
+                          Address <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           placeholder="Enter venue address"
                           className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors"
-                          {...register("address")}
+                          {...register("address", { 
+                            required: "Address is required for venues",
+                            minLength: {
+                              value: 10,
+                              message: "Address must be at least 10 characters"
+                            }
+                          })}
                         />
+                        {errors.address && (
+                          <div className="flex items-center mt-2 text-red-600">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            <span className="text-sm">{errors.address.message}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center">
                             <Square className="w-4 h-4 mr-2" />
-                            Area (sqft)
+                            Area (sqft) <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="number"
                             className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors"
-                            {...register("area")}
+                            {...register("area", { 
+                              required: "Area is required",
+                              min: {
+                                value: 1,
+                                message: "Area must be greater than 0"
+                              }
+                            })}
                           />
+                          {errors.area && (
+                            <div className="flex items-center mt-2 text-red-600">
+                              <AlertCircle className="w-4 h-4 mr-2" />
+                              <span className="text-sm">{errors.area.message}</span>
+                            </div>
+                          )}
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-slate-700 mb-2 flex items-center">
                             <Users className="w-4 h-4 mr-2" />
-                            Capacity
+                            Capacity <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="number"
                             className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors"
-                            {...register("capacity")}
+                            {...register("capacity", { 
+                              required: "Capacity is required",
+                              min: {
+                                value: 1,
+                                message: "Capacity must be at least 1"
+                              }
+                            })}
                           />
+                          {errors.capacity && (
+                            <div className="flex items-center mt-2 text-red-600">
+                              <AlertCircle className="w-4 h-4 mr-2" />
+                              <span className="text-sm">{errors.capacity.message}</span>
+                            </div>
+                          )}
                         </div>
 
                         <div>
                           <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Venue Type
+                            Venue Type <span className="text-red-500">*</span>
                           </label>
                           <select
                             className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors bg-white"
-                            {...register("venuetype")}
+                            {...register("venuetype", { 
+                              required: "Venue type is required"
+                            })}
                           >
                             <option value="">Select type</option>
                             {VenueTypes.map((item, index) => (
@@ -421,6 +475,12 @@ const UpdatePost = () => {
                               </option>
                             ))}
                           </select>
+                          {errors.venuetype && (
+                            <div className="flex items-center mt-2 text-red-600">
+                              <AlertCircle className="w-4 h-4 mr-2" />
+                              <span className="text-sm">{errors.venuetype.message}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -433,7 +493,7 @@ const UpdatePost = () => {
                     <div className="flex items-center space-x-3">
                       <Clock className="w-5 h-5 text-slate-600" />
                       <h2 className="text-lg font-semibold text-slate-900">
-                        Operational Days & Hours
+                        Operational Days & Hours <span className="text-red-500">*</span>
                       </h2>
                     </div>
                   </div>
@@ -441,7 +501,7 @@ const UpdatePost = () => {
                     {/* Days of Operation */}
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Select Operational Days
+                        Select Operational Days <span className="text-red-500">*</span>
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {[
@@ -474,30 +534,66 @@ const UpdatePost = () => {
                           </label>
                         ))}
                       </div>
+                      {errors.operationDays && (
+                        <div className="flex items-center mt-2 text-red-600">
+                          <AlertCircle className="w-4 h-4 mr-2" />
+                          <span className="text-sm">Please select at least one operational day</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Operation Hours */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Opening Time
+                          Opening Time <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="time"
                           className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
-                          {...register("operationHours.open")}
+                          {...register("operationHours.open", { 
+                            required: "Opening time is required",
+                            validate: (value) => {
+                              const closeTime = watch("operationHours.close");
+                              if (closeTime && value >= closeTime) {
+                                return "Opening time must be before closing time";
+                              }
+                              return true;
+                            }
+                          })}
                         />
+                        {errors.operationHours?.open && (
+                          <div className="flex items-center mt-2 text-red-600">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            <span className="text-sm">{errors.operationHours.open.message}</span>
+                          </div>
+                        )}
                       </div>
 
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Closing Time
+                          Closing Time <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="time"
                           className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
-                          {...register("operationHours.close")}
+                          {...register("operationHours.close", { 
+                            required: "Closing time is required",
+                            validate: (value) => {
+                              const openTime = watch("operationHours.open");
+                              if (openTime && value <= openTime) {
+                                return "Closing time must be after opening time";
+                              }
+                              return true;
+                            }
+                          })}
                         />
+                        {errors.operationHours?.close && (
+                          <div className="flex items-center mt-2 text-red-600">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            <span className="text-sm">{errors.operationHours.close.message}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -523,8 +619,15 @@ const UpdatePost = () => {
                           placeholder="0.00"
                           className="w-full pl-12 pr-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors text-lg font-medium"
                           {...register("price", {
-                            required: "This field is required*",
-                            min: { value: 1, message: "Price must be greater than 0" }
+                            required: "Price is required",
+                            min: { 
+                              value: 1, 
+                              message: "Price must be greater than 0" 
+                            },
+                            max: {
+                              value: 1000000,
+                              message: "Price must be less than 1,000,000"
+                            }
                           })}
                         />
                       </div>
@@ -560,7 +663,7 @@ const UpdatePost = () => {
                       {watchOffer && (
                         <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                           <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Discount Price ($/month)
+                            Discount Price ($/month) <span className="text-red-500">*</span>
                           </label>
                           <div className="relative">
                             <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -569,11 +672,15 @@ const UpdatePost = () => {
                               placeholder="0.00"
                               className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors text-lg font-medium bg-white"
                               {...register("discountPrice", {
+                                required: "Discount price is required when offer is checked",
                                 validate: (value) => {
                                   const price = getValues("price");
                                   if (!price) return "Please enter regular price first";
                                   if (parseFloat(value) >= parseFloat(price)) {
                                     return "Discount price must be less than regular price";
+                                  }
+                                  if (parseFloat(value) <= 0) {
+                                    return "Discount price must be greater than 0";
                                   }
                                   return true;
                                 }
@@ -599,7 +706,9 @@ const UpdatePost = () => {
                   <div className="p-6 border-b border-slate-100">
                     <div className="flex items-center space-x-3">
                       <Image className="w-5 h-5 text-slate-600" />
-                      <h2 className="text-lg font-semibold text-slate-900">Media</h2>
+                      <h2 className="text-lg font-semibold text-slate-900">
+                        Media <span className="text-red-500">*</span>
+                      </h2>
                     </div>
                   </div>
                   <div className="p-6">

@@ -476,6 +476,7 @@ const ListingDetails = ({
         closeModal={() => setshowBooking(false)}
         id={_id}
         operationHours={operationalHours}
+        operationDays={operationalDays}
         type={type}
       ></BookingDialog>
     </div>

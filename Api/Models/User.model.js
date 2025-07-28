@@ -12,10 +12,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
-    phone:{
-        type: String,
-        required: true,
-        unique: true,
+    phone: {
+      type: String,
+      required: true,
+      unique: true,
     },
     password: {
       type: String,
@@ -26,10 +26,20 @@ const userSchema = new mongoose.Schema(
       default:
         "https://thinksport.com.au/wp-content/uploads/2020/01/avatar-.jpg",
     },
+    shippingAddress: {
+      street: String,
+      city: String,
+      state: String,
+      postalCode: String,
+    },
+    bio:{
+      type:String,
+      default:"Welcome to my profile! Explore my collection of products and services"
+    }
   },
   { timestamps: true }
 );
 
 const User = mongoose.model("User", userSchema);
 
-module.exports = User
+module.exports = User;

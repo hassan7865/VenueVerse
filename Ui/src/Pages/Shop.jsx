@@ -1,123 +1,444 @@
 import React, { useState, useEffect } from "react";
-import Hero from "../Components/Shop/Hero";
+import { useNavigate } from "react-router-dom";
 import ProductListingCard from "../Components/Shop/ListingProductCard";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
+import {
+  FiArrowRight,
+  FiSearch,
+  FiPlusCircle,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 import api from "../lib/Url";
+import Loading from "../Components/Loading";
+
+const EventDecorCategories = [
+  "Lighting & Effects",
+  "Floral Decoration",
+  "Table Decoration",
+  "Dining Setup",
+  "Other",
+];
+
+// Custom Arrow Components for Slider
+const CustomPrevArrow = ({ onClick }) => (
+  <button
+    onClick={onClick}
+    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110 -ml-6"
+  >
+    <FiChevronLeft className="w-5 h-5 text-gray-700" />
+  </button>
+);
+
+const CustomNextArrow = ({ onClick }) => (
+  <button
+    onClick={onClick}
+    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-3 transition-all duration-200 hover:scale-110 -mr-6"
+  >
+    <FiChevronRight className="w-5 h-5 text-gray-700" />
+  </button>
+);
 
 const Shop = () => {
-  const [products, setProducts] = useState([]);
+  const navigate = useNavigate();
+  const [categoryProducts, setCategoryProducts] = useState({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [categoryLoading, setCategoryLoading] = useState({});
 
-  const fetchProducts = async () => {
+  // Slider settings
+  const sliderSettings = {
+    dots: false,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 2,
+    prevArrow: <CustomPrevArrow />,
+    nextArrow: <CustomNextArrow />,
+    responsive: [
+      {
+        breakpoint: 1024,
+        settings: {
+          slidesToShow: 3,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 768,
+        settings: {
+          slidesToShow: 2,
+          slidesToScroll: 1,
+        },
+      },
+      {
+        breakpoint: 480,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+        },
+      },
+    ],
+  };
+
+  // Fetch products for all categories
+  const fetchAllCategories = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      const res = await api.get("/product");
-      setProducts(res.data);
+      const promises = EventDecorCategories.map((category) =>
+        fetchProductsByCategory(category)
+      );
+      await Promise.all(promises);
     } catch (err) {
-      setError("Failed to load products. Please try again later.");
-      console.error("Error fetching products:", err);
+      console.error("Error loading categories:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch products for a specific category
+  const fetchProductsByCategory = async (category) => {
+    try {
+      setCategoryLoading((prev) => ({ ...prev, [category]: true }));
+      const res = await api.get("/product", { params: { category } });
+      setCategoryProducts((prev) => ({
+        ...prev,
+        [category]: res.data.products,
+      }));
+    } catch (err) {
+      console.error(`Error fetching ${category} products:`, err);
+      setCategoryProducts((prev) => ({
+        ...prev,
+        [category]: [],
+      }));
+    } finally {
+      setCategoryLoading((prev) => ({ ...prev, [category]: false }));
+    }
+  };
+
   useEffect(() => {
-    fetchProducts();
+    fetchAllCategories();
   }, []);
 
+  const CategoryIcon = ({ category }) => {
+    const iconMap = {
+      "Lighting & Effects": (
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+          />
+        </svg>
+      ),
+      "Floral Decoration": (
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2m-4-4V5m0 4h4m-4 0H3"
+          />
+        </svg>
+      ),
+      "Table Decoration": (
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+          />
+        </svg>
+      ),
+      "Dining Setup": (
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+          />
+        </svg>
+      ),
+      Other: (
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+          />
+        </svg>
+      ),
+    };
+    return iconMap[category] || iconMap["Other"];
+  };
+
+  const LoadingSpinner = ({ text = "Loading..." }) => (
+    <div className="flex flex-col items-center justify-center py-12">
+      <Loading />
+      <p className="mt-4 text-brand-blue font-medium">{text}</p>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Hero />
-      
-      <section className="py-12 sm:py-16 lg:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Section Header */}
-          <div className="text-center mb-12 lg:mb-16">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-              Explore Our Products
-            </h1>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-              Discover our carefully curated collection of premium products designed to elevate your lifestyle.
-            </p>
-          </div>
+    <div className="font-sans antialiased text-gray-900 bg-white">
+      {/* Hero Section */}
+      <section className="relative min-h-[70vh] flex items-center overflow-hidden bg-gray-900">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black opacity-90 z-10"></div>
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1770&q=80')] bg-cover bg-center"></div>
 
-          {/* Loading State */}
-          {loading && (
-            <div className="flex justify-center items-center py-24">
-              <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-                <p className="text-gray-600 font-medium">Loading products...</p>
+        <div className="relative z-20 mx-auto max-w-7xl px-6 lg:px-8 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <h1 className="text-4xl lg:text-6xl font-light tracking-tight text-white leading-tight">
+                  Premium Event
+                  <span className="block font-medium bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                    Decor & Supplies
+                  </span>
+                </h1>
+                <p className="text-xl text-gray-300 leading-relaxed max-w-xl">
+                  Discover our curated collection of high-quality event
+                  decoration products to make your celebration unforgettable.
+                </p>
               </div>
-            </div>
-          )}
 
-          {/* Error State */}
-          {error && (
-            <div className="text-center py-24">
-              <div className="bg-red-50 border border-red-200 rounded-xl p-8 max-w-lg mx-auto">
-                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-semibold text-red-900 mb-2">Something went wrong</h3>
-                <p className="text-red-700 font-medium mb-6">{error}</p>
+              <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={fetchProducts}
-                  className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors duration-300 font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  onClick={() => navigate("/search")}
+                  className="group inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
-                  Try Again
+                  <FiSearch className="mr-2 w-5 h-5" />
+                  Browse Products
+                  <FiArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </button>
+                <button
+                  onClick={() => navigate("/create_post")}
+                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/20 text-white font-medium rounded-lg hover:border-white/40 hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
+                >
+                  <FiPlusCircle className="mr-2 w-5 h-5" />
+                  Sell Your Products
                 </button>
               </div>
-            </div>
-          )}
 
-          {/* Products Grid */}
-          {!loading && !error && (
-            <>
-              {products.length > 0 ? (
-                <>
-                  {/* Products Count */}
-                  <div className="mb-8">
-                    <p className="text-gray-600 font-medium">
-                      Showing {products.length} product{products.length !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-                  
-                  {/* Responsive Grid with Better Spacing */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 lg:gap-10">
-                    {products.map((product) => (
-                      <div key={product._id} className="w-full">
-                        <ProductListingCard product={product} />
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-24">
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-lg mx-auto">
-                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
+              <div className="flex items-center space-x-8 text-sm text-gray-400">
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                  <span>1000+ Products</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                  <span>Premium Quality</span>
+                </div>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
+                  <span>Trusted Sellers</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Category Sections */}
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <div className="space-y-20 py-16">
+          {EventDecorCategories.map((category) => (
+            <section key={category} className="bg-white">
+              <div className="mx-auto max-w-7xl px-6 lg:px-8">
+                {/* Category Header */}
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gray-100 rounded-lg">
+                      <CategoryIcon category={category} />
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">No Products Found</h3>
-                    <p className="text-gray-600 leading-relaxed mb-6">
-                      We couldn't find any products at the moment. Our inventory might be updating or there could be a temporary issue.
-                    </p>
-                    <button
-                      onClick={fetchProducts}
-                      className="bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-black transition-colors duration-300 font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                    >
-                      Refresh Products
-                    </button>
+                    <div>
+                      <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900">
+                        {category}
+                      </h2>
+                      {categoryProducts[category]?.length > 0 && (
+                        <p className="text-gray-600 text-sm mt-1">
+                          {categoryProducts[category].length} products available
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              )}
-            </>
-          )}
+
+                {/* Products Slider */}
+                {categoryLoading[category] ? (
+                  <LoadingSpinner text={`Loading ${category}...`} />
+                ) : categoryProducts[category]?.length > 0 ? (
+                  <div className="relative">
+                    <Slider {...sliderSettings}>
+                      {categoryProducts[category].map((product) => (
+                        <div key={product._id} className="px-3">
+                          <ProductListingCard product={product} />
+                        </div>
+                      ))}
+                    </Slider>
+
+                    {/* View More Button */}
+                    <div className="flex justify-center mt-8">
+                      <button
+                        onClick={() =>
+                          navigate(
+                            `/search?category=${encodeURIComponent(category)}`
+                          )
+                        }
+                        className="group inline-flex items-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        View More {category}
+                        <FiArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="p-4 bg-gray-200 rounded-full">
+                        <CategoryIcon category={category} />
+                      </div>
+                      <div>
+                        <p className="text-lg font-medium text-gray-600 mb-2">
+                          No products available
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          Be the first to list products in {category}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => navigate("/create_post")}
+                        className="mt-4 inline-flex items-center px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                      >
+                        <FiPlusCircle className="mr-2 w-4 h-4" />
+                        List Product
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {/* CTA Section */}
+      <section className="py-24 bg-gray-50 relative">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div className="space-y-8">
+              <div className="space-y-6">
+                <div className="inline-flex items-center px-4 py-2 bg-white rounded-full text-sm font-medium text-gray-600">
+                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                  Become a Seller
+                </div>
+                <h2 className="text-4xl font-light text-gray-900 leading-tight">
+                  Join Our
+                  <span className="block font-medium">Premium Marketplace</span>
+                </h2>
+                <p className="text-xl text-gray-600 leading-relaxed">
+                  List your event decor products on our platform and reach
+                  thousands of customers looking for quality items.
+                </p>
+              </div>
+
+              <button
+                onClick={() => navigate("/create_post")}
+                className="group inline-flex items-center px-8 py-4 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Start Selling
+                <FiArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl opacity-20 blur-xl"></div>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] bg-gray-200">
+                <img
+                  src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=800&q=80"
+                  alt="Selling products"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-24 bg-gray-900 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1770&q=80')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 text-center">
+          <div className="space-y-8 max-w-4xl mx-auto">
+            <div className="space-y-6">
+              <div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm font-medium text-white">
+                <span className="w-2 h-2 bg-amber-400 rounded-full mr-2"></span>
+                Get Started Today
+              </div>
+              <h2 className="text-4xl lg:text-5xl font-light text-white leading-tight">
+                Ready to Elevate Your
+                <span className="block font-medium bg-gradient-to-r from-amber-300 to-yellow-300 bg-clip-text text-transparent">
+                  Event Decor?
+                </span>
+              </h2>
+              <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto">
+                Browse our collection or join as a seller to be part of our
+                premium marketplace.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button
+                onClick={() => navigate("/search")}
+                className="group inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
+                Browse Products
+                <FiArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button
+                onClick={() => navigate("/create_post")}
+                className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/20 text-white font-medium rounded-lg hover:border-white/40 hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
+              >
+                <FiPlusCircle className="mr-2 w-5 h-5" />
+                List Your Products
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </div>

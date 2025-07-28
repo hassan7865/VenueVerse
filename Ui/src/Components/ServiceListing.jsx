@@ -107,7 +107,7 @@ const ServiceListing = () => {
           ) : (
             <div className="relative group">
               <Slider {...settings} className="px-2">
-                {servicelisting.map((listing) => (
+                {servicelisting?.map((listing) => (
                   <div key={listing._id} className="px-2 py-4">
                     <ListingCard listing={listing} />
                   </div>

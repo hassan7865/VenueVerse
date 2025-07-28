@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BsBag, BsSearch } from "react-icons/bs";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { MdOutlineClose } from "react-icons/md";
 import { FiHome, FiPlusCircle } from "react-icons/fi";
 import { HiOutlineMenuAlt3 } from "react-icons/hi";
@@ -14,9 +14,15 @@ import { SidebarContext } from "../context/sidebar";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const currentUser = UserProfile.GetUserData();
-  const { isOpen, setIsOpen,toggleSidebar } = useContext(SidebarContext);
+  const { toggleSidebar } = useContext(SidebarContext);
   const { itemAmount } = useContext(CartContext);
+  const [currentUser, setCurrentUser] = useState(UserProfile.GetUserData());
+  const location = useLocation();
+
+  useEffect(() => {
+    const user = UserProfile.GetUserData();
+    setCurrentUser(user);
+  }, [location.pathname]);
 
   return (
     <>

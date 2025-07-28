@@ -6,10 +6,8 @@ import {
   Image,
   FileText,
   Plus,
-  
   AlertCircle,
   Palette,
-
   List,
   Star,
 } from "lucide-react";
@@ -25,6 +23,7 @@ const EventDecorCategories = [
   "Dining Setup",
   "Other",
 ];
+
 const CreateDecorItem = () => {
   const currentUser = UserProfile.GetUserData();
   const [imageFile, setImageFile] = useState([]);
@@ -38,9 +37,9 @@ const CreateDecorItem = () => {
     register,
     handleSubmit,
     control,
-    watch,
     formState: { errors },
-    setValue,
+    setError,
+    clearErrors,
   } = useForm({
     defaultValues: {
       name: "",
@@ -49,13 +48,19 @@ const CreateDecorItem = () => {
       category: "",
       stock: 0,
       isFeatured: false,
-    }
+    },
+    mode: "onBlur", // Validate on blur for better UX
   });
-
 
   const handleImageUpload = async (e) => {
     e.preventDefault();
-    if (!imageFile.length) return;
+    if (!imageFile.length) {
+      setError("images", {
+        type: "manual",
+        message: "Please select at least one image",
+      });
+      return;
+    }
 
     setLoading(true);
     const uploadFormData = new FormData();
@@ -73,7 +78,12 @@ const CreateDecorItem = () => {
 
       setUploadedImages(prev => [...prev, ...response.data.images]);
       setImageFile([]);
+      clearErrors("images"); // Clear any previous image errors
     } catch (error) {
+      setError("images", {
+        type: "manual",
+        message: error.response?.data?.message || "Image upload failed",
+      });
       toast.error(error.response?.data?.message || error.message || "Image upload failed");
     } finally {
       setLoading(false);
@@ -81,11 +91,26 @@ const CreateDecorItem = () => {
   };
 
   const handleDeleteImage = async (index) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    const newImages = [...uploadedImages];
+    newImages.splice(index, 1);
+    setUploadedImages(newImages);
+    
+    if (newImages.length === 0) {
+      setError("images", {
+        type: "manual",
+        message: "At least one image is required",
+      });
+    } else {
+      clearErrors("images");
+    }
   };
 
   const onSubmit = async (data) => {
     if (uploadedImages.length < 1) {
+      setError("images", {
+        type: "manual",
+        message: "Please upload at least one image",
+      });
       toast.error("Please upload at least one image", { position: "top-right" });
       return;
     }
@@ -107,13 +132,35 @@ const CreateDecorItem = () => {
 
       toast.success("Shop item created successfully!");
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || error.message || "An error occurred",
-        { position: "top-right" }
-      );
+      // Handle server-side validation errors
+      if (error.response?.data?.errors) {
+        error.response.data.errors.forEach(err => {
+          setError(err.path, {
+            type: "server",
+            message: err.msg,
+          });
+        });
+      } else {
+        toast.error(
+          error.response?.data?.message || error.message || "An error occurred",
+          { position: "top-right" }
+        );
+      }
     } finally {
       setFormSubmitLoading(false);
     }
+  };
+
+  // Custom error message component
+  const ErrorMessage = ({ error }) => {
+    if (!error) return null;
+    
+    return (
+      <div className="flex items-center mt-2 text-red-600">
+        <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+        <span className="text-sm">{error.message}</span>
+      </div>
+    );
   };
 
   return (
@@ -175,17 +222,24 @@ const CreateDecorItem = () => {
                       Item Name <span className="text-red-500">*</span>
                     </label>
                     <input
-                      {...register("name", { required: "This field is required" })}
+                      {...register("name", { 
+                        required: "This field is required",
+                        minLength: {
+                          value: 3,
+                          message: "Name must be at least 3 characters"
+                        },
+                        maxLength: {
+                          value: 100,
+                          message: "Name must be less than 100 characters"
+                        }
+                      })}
                       type="text"
                       placeholder="e.g., Crystal Centerpiece, Floral Garland, etc."
-                      className="w-full bg-white px-4 py-3 border border-slate-500 rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors text-slate-900 placeholder-slate-400"
+                      className={`w-full bg-white px-4 py-3 border rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors text-slate-900 placeholder-slate-400 ${
+                        errors.name ? "border-red-500" : "border-slate-500"
+                      }`}
                     />
-                    {errors.name && (
-                      <div className="flex items-center mt-2 text-red-600">
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{errors.name.message}</span>
-                      </div>
-                    )}
+                    <ErrorMessage error={errors.name} />
                   </div>
 
                   <div>
@@ -193,17 +247,24 @@ const CreateDecorItem = () => {
                       Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      {...register("description", { required: "This field is required" })}
+                      {...register("description", { 
+                        required: "This field is required",
+                        minLength: {
+                          value: 10,
+                          message: "Description must be at least 10 characters"
+                        },
+                        maxLength: {
+                          value: 1000,
+                          message: "Description must be less than 1000 characters"
+                        }
+                      })}
                       rows="4"
                       placeholder="Describe your shop item in detail (materials, dimensions, colors, etc.)"
-                      className="w-full px-4 py-3 border bg-white border-slate-500 rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors text-slate-900 placeholder-slate-400 resize-none"
+                      className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors text-slate-900 placeholder-slate-400 resize-none ${
+                        errors.description ? "border-red-500" : "border-slate-500"
+                      }`}
                     />
-                    {errors.description && (
-                      <div className="flex items-center mt-2 text-red-600">
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{errors.description.message}</span>
-                      </div>
-                    )}
+                    <ErrorMessage error={errors.description} />
                   </div>
                 </div>
               </div>
@@ -224,8 +285,14 @@ const CreateDecorItem = () => {
                       Category <span className="text-red-500">*</span>
                     </label>
                     <select
-                      {...register("category", { required: "Please select a category" })}
-                      className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors"
+                      {...register("category", { 
+                        required: "Please select a category",
+                        validate: value => 
+                          EventDecorCategories.includes(value) || "Please select a valid category"
+                      })}
+                      className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
+                        errors.category ? "border-red-500" : "border-slate-500"
+                      }`}
                     >
                       <option value="">Select a category</option>
                       {EventDecorCategories.map((category, index) => (
@@ -234,12 +301,7 @@ const CreateDecorItem = () => {
                         </option>
                       ))}
                     </select>
-                    {errors.category && (
-                      <div className="flex items-center mt-2 text-red-600">
-                        <AlertCircle className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{errors.category.message}</span>
-                      </div>
-                    )}
+                    <ErrorMessage error={errors.category} />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -250,19 +312,27 @@ const CreateDecorItem = () => {
                       <input
                         {...register("price", { 
                           required: "This field is required",
-                          min: { value: 0.01, message: "Price must be greater than 0" }
+                          min: { 
+                            value: 0.01, 
+                            message: "Price must be greater than 0" 
+                          },
+                          max: {
+                            value: 100000,
+                            message: "Price must be less than $100,000"
+                          },
+                          pattern: {
+                            value: /^\d+(\.\d{1,2})?$/,
+                            message: "Price must be a valid number with up to 2 decimal places"
+                          }
                         })}
                         type="number"
                         step="0.01"
                         placeholder="0.00"
-                        className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors"
+                        className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
+                          errors.price ? "border-red-500" : "border-slate-500"
+                        }`}
                       />
-                      {errors.price && (
-                        <div className="flex items-center mt-2 text-red-600">
-                          <AlertCircle className="w-4 h-4 mr-2" />
-                          <span className="text-sm">{errors.price.message}</span>
-                        </div>
-                      )}
+                      <ErrorMessage error={errors.price} />
                     </div>
 
                     <div>
@@ -271,21 +341,28 @@ const CreateDecorItem = () => {
                       </label>
                       <input
                         {...register("stock", { 
-                          min: { value: 0, message: "Stock cannot be negative" }
+                          min: { 
+                            value: 0, 
+                            message: "Stock cannot be negative" 
+                          },
+                          max: {
+                            value: 10000,
+                            message: "Stock must be less than 10,000"
+                          },
+                          pattern: {
+                            value: /^[0-9]+$/,
+                            message: "Stock must be a whole number"
+                          }
                         })}
                         type="number"
-                        className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors"
+                        className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
+                          errors.stock ? "border-red-500" : "border-slate-500"
+                        }`}
                       />
-                      {errors.stock && (
-                        <div className="flex items-center mt-2 text-red-600">
-                          <AlertCircle className="w-4 h-4 mr-2" />
-                          <span className="text-sm">{errors.stock.message}</span>
-                        </div>
-                      )}
+                      <ErrorMessage error={errors.stock} />
                     </div>
                   </div>
 
-                  
                   <div>
                     <label className="flex items-center space-x-3 cursor-pointer p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                       <Controller
@@ -327,7 +404,9 @@ const CreateDecorItem = () => {
                   </div>
                 </div>
                 <div className="p-6">
-                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors">
+                  <div className={`border-2 border-dashed rounded-lg p-8 text-center hover:border-slate-400 transition-colors ${
+                    errors.images ? "border-red-500 bg-red-50" : "border-slate-300"
+                  }`}>
                     <div className="w-12 h-12 mx-auto bg-slate-100 rounded-lg flex items-center justify-center mb-4">
                       <Plus className="w-6 h-6 text-slate-600" />
                     </div>
@@ -343,7 +422,12 @@ const CreateDecorItem = () => {
                       type="file"
                       multiple
                       accept="image/*"
-                      onChange={(e) => setImageFile(e.target.files)}
+                      onChange={(e) => {
+                        setImageFile(e.target.files);
+                        if (e.target.files.length > 0) {
+                          clearErrors("images");
+                        }
+                      }}
                       className="hidden"
                       id="file-upload"
                     />
@@ -375,6 +459,8 @@ const CreateDecorItem = () => {
                       </button>
                     )}
                   </div>
+
+                  <ErrorMessage error={errors.images} />
 
                   {/* Uploaded Images */}
                   {uploadedImages.length > 0 && (
@@ -412,12 +498,6 @@ const CreateDecorItem = () => {
                           </button>
                         </div>
                       ))}
-                    </div>
-                  )}
-                  {uploadError.isError && (
-                    <div className="mt-4 text-red-600 text-sm">
-                      <AlertCircle className="inline w-4 h-4 mr-1" />
-                      {uploadError.message}
                     </div>
                   )}
                 </div>

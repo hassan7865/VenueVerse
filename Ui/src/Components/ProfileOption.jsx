@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaSignOutAlt, FaUser } from 'react-icons/fa';
 import UserProfile from '../../UserProfile';
 import toast from 'react-hot-toast';
+import { List } from 'lucide-react';
+import { MdInventory2 } from 'react-icons/md';
 
 const ProfileOption = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,6 +64,15 @@ const ProfileOption = ({ user }) => {
           >
             <FaUser className="mr-3 text-gray-500" />
             Profile
+          </Link>
+
+           <Link 
+            to="/mylisting" 
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsOpen(false)}
+          >
+            <MdInventory2 className="mr-3 text-gray-500" />
+            My Listing
           </Link>
           
           <button

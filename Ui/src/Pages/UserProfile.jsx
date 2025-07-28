@@ -21,6 +21,7 @@ import UserProfile from "../../UserProfile";
 import toast from "react-hot-toast";
 import PostCard from "../components/PostCard"; // Assuming these exist
 import ProductCard from "../Components/Shop/ProductCard";
+import Loading from "../Components/Loading";
 
 const UserProfileCatalogue = () => {
   const { userId } = useParams();
@@ -70,62 +71,16 @@ const UserProfileCatalogue = () => {
     fetchUserData();
   }, [userId]);
 
-  const handleDelete = async (type, id) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
-
-    try {
-      let endpoint = "";
-      switch (type) {
-        case "shop":
-          endpoint = `/products/${id}`;
-          break;
-        case "service":
-        case "venue":
-          endpoint = `/posts/${id}`;
-          break;
-        default:
-          return;
-      }
-
-      await api.delete(endpoint);
-      toast.success("Item deleted successfully");
-
-      // Refresh data
-      const [shopResponse, postResponse] = await Promise.all([
-        api.get(`/product/user/${userId}`),
-        api.get(`/post/user/${userId}`),
-      ]);
-
-      setShopItems(shopResponse.data);
-
-      // Filter posts by type
-      const allPosts = postResponse.data || [];
-      const services = allPosts.filter((post) => post.type === "service");
-      const venues = allPosts.filter((post) => post.type === "venue");
-
-      setServices(services);
-      setVenues(venues);
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message || error.message || "Deletion failed"
-      );
-    }
-  };
+ 
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center space-y-4">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-slate-200 rounded-full animate-spin"></div>
-              <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold text-slate-900">Loading Profile</h3>
-              <p className="text-slate-600">Please wait while we fetch the user data...</p>
-            </div>
-          </div>
+       <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loading />
+          <p className="font-heading text-slate-900 text-lg sm:text-2xl mt-4">
+            Loading...
+          </p>
         </div>
       </div>
     );
@@ -147,7 +102,7 @@ const UserProfileCatalogue = () => {
     );
   }
 
-  const isCurrentUser = currentUser._id === userId;
+  const isCurrentUser = currentUser && currentUser._id
   const totalListings = shopItems.length + services.length + venues.length;
 
   const stats = [
@@ -198,7 +153,7 @@ const UserProfileCatalogue = () => {
               <div className="absolute bottom-4 right-6">
                 {isCurrentUser && (
                   <Link
-                    to="/profile/edit"
+                    to="/profile"
                     className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-all duration-200 border border-white/20"
                   >
                     <Edit3 className="w-4 h-4 mr-2" />
@@ -258,12 +213,7 @@ const UserProfileCatalogue = () => {
                             <span>{userData.phone}</span>
                           </div>
                         )}
-                        {userData.location && (
-                          <div className="flex items-center text-sm text-slate-500">
-                            <MapPin className="w-4 h-4 mr-2" />
-                            <span>{userData.location}</span>
-                          </div>
-                        )}
+                       
                       </div>
                     </div>
                   </div>
@@ -338,7 +288,6 @@ const UserProfileCatalogue = () => {
                                 image:
                                   item.images?.[0] || "/default-venue.jpg",
                               },
-                              handlePostDelete: handleDelete,
                             }}
                           />
                   );
@@ -360,32 +309,6 @@ const UserProfileCatalogue = () => {
                     ? `Start building your ${activeTab === "all" ? "portfolio" : activeTab} collection and showcase your offerings to potential clients.`
                     : `This user hasn't added any ${activeTab === "all" ? "listings" : activeTab} yet. Check back later!`}
                 </p>
-                
-                {isCurrentUser && (
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link
-                      to="/shop/new"
-                      className="inline-flex items-center px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Product
-                    </Link>
-                    <Link
-                      to="/services/new"
-                      className="inline-flex items-center px-6 py-3 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Service
-                    </Link>
-                    <Link
-                      to="/venues/new"
-                      className="inline-flex items-center px-6 py-3 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Venue
-                    </Link>
-                  </div>
-                )}
               </div>
             </div>
           )}

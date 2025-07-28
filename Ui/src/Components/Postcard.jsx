@@ -140,7 +140,7 @@ const PostCard = ({ postInfo }) => {
           )}
         </div>
 
-        {currentUser._id == postInfo.post.userId &&
+        {currentUser?._id == postInfo.post.userId &&
         <div className="mt-5 flex flex-col sm:flex-row gap-3">
           <button
             onClick={(e) => {

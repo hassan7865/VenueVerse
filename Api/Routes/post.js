@@ -37,7 +37,7 @@ route.get("/:id", async (req, res, next) => {
     next(err);
   }
 });
-route.get("/user/:id", verifyToken, async (req, res, next) => {
+route.get("/user/:id", async (req, res, next) => {
   try {
     const getPost = await post.find({ userId: req.params.id });
     return res.status(200).json(getPost);
