@@ -8,8 +8,6 @@ import {
   MapPinIcon,
   FileTextIcon,
 } from "lucide-react";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import api from "../lib/Url";
 import UserProfile from "../../UserProfile";
 import Loading from "../Components/Loading";

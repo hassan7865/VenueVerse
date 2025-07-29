@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Components/Loading.jsx";
 import UserProfile from "../../UserProfile.js";
-import PostCard from "../components/PostCard.jsx";
+import PostCard from "../Components/Postcard.jsx";
 import api from "../lib/Url.js";
 import ProductCard from "../Components/Shop/ProductCard.jsx";
 import { showConfirmationToast } from "../Components/DeleteComponent.jsx";

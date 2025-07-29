@@ -19,9 +19,9 @@ import {
 import api from "../lib/Url";
 import UserProfile from "../../UserProfile";
 import toast from "react-hot-toast";
-import PostCard from "../components/PostCard"; // Assuming these exist
 import ProductCard from "../Components/Shop/ProductCard";
 import Loading from "../Components/Loading";
+import PostCard from "../Components/Postcard";
 
 const UserProfileCatalogue = () => {
   const { userId } = useParams();

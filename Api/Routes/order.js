@@ -26,8 +26,8 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       })),
       mode: "payment",
       success_url:
-        "http://localhost:5173/shop-success?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "http://localhost:5173/shop?canceled=true",
+        "https://venueverse-cyan.vercel.app/shop-success?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: "https://venueverse-cyan.vercel.app/shop?canceled=true",
       metadata: {
         userId: req.user._id,
         shippingAddress: JSON.stringify(shippingAddress),

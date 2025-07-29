@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import ListingCard from "../components/ListingCard";
+import ListingCard from "../Components/ListingCard";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
@@ -50,28 +50,40 @@ const OfferedListing = () => {
   );
 
   const settings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 4,
-    slidesToScroll: 1,
-    nextArrow: <SampleNextArrow />,
-    prevArrow: <SamplePrevArrow />,
-    responsive: [
-      { breakpoint: 1280, settings: { slidesToShow: 3 } },
-      { breakpoint: 1024, settings: { slidesToShow: 2 } },
-      {
-        breakpoint: 640,
-        settings: {
-          slidesToShow: 1,
-          arrows: false,
-          centerMode: true,
-          centerPadding: "40px",
-        },
+  dots: false,
+  infinite: false,
+  speed: 500,
+  slidesToShow: 4,
+  slidesToScroll: 1,
+  autoplay: true,
+  autoplaySpeed: 3000,
+  pauseOnHover: true,
+  nextArrow: <SampleNextArrow />,
+  prevArrow: <SamplePrevArrow />,
+  responsive: [
+    {
+      breakpoint: 1280,
+      settings: { 
+        slidesToShow: 3 
       },
-    ],
-  };
-
+    },
+    {
+      breakpoint: 1024,
+      settings: { 
+        slidesToShow: 2 
+      },
+    },
+    {
+      breakpoint: 640,
+      settings: {
+        slidesToShow: 1,
+        arrows: false,
+        centerMode: true,
+        centerPadding: "40px",
+      },
+    },
+  ],
+};
   return (
     <section className="bg-gradient-to-b from-amber-50 to-white py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-12">

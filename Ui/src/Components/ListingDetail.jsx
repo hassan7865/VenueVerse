@@ -68,6 +68,8 @@ const ListingDetails = ({
     imgUrl,
   } = listings;
 
+  console.log(imgUrl)
+
   function SamplePrevArrow({ onClick }) {
     return (
       <div
@@ -90,39 +92,39 @@ const ListingDetails = ({
     );
   }
 
-  const settings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-    nextArrow: <SampleNextArrow />,
-    prevArrow: <SamplePrevArrow />,
-    beforeChange: (current, next) => setCurrentSlide(next),
-    appendDots: (dots) => (
-      <div className="absolute bottom-6 w-full">
-        <ul className="flex justify-center space-x-2">
-          {dots.map((dot, index) => (
-            <li
-              key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                currentSlide === index ? "bg-white w-4" : "bg-white/50"
-              }`}
-            >
-              {dot}
-            </li>
-          ))}
-        </ul>
-      </div>
-    ),
-  };
-
+ const settings = {
+  dots: true,
+  infinite: imgUrl?.length > 1,
+  speed: 500,
+  slidesToShow: 1,
+  slidesToScroll: 1,
+  nextArrow: imgUrl?.length > 1 ? <SampleNextArrow /> : null,
+  prevArrow: imgUrl?.length > 1 ? <SamplePrevArrow /> : null,
+  beforeChange: (current, next) => setCurrentSlide(next),
+  appendDots: (dots) => (
+    <div className="absolute bottom-6 w-full">
+      <ul className="flex justify-center space-x-2">
+        {dots.map((dot, index) => (
+          <li
+            key={index}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              currentSlide === index ? "bg-white w-4" : "bg-white/50"
+            }`}
+          >
+            {dot}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ),
+};
   return (
     <div className="bg-gray-50 min-h-screen">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-gray-900 to-gray-800">
         <Slider {...settings} className="z-10">
           {imgUrl?.map((listing, index) => {
+            console.log(listing)
             const isVideo =
               listing.type?.startsWith("video") ||
               listing.path?.match(/\.(mp4|webm|mov)$/i);
@@ -132,7 +134,7 @@ const ListingDetails = ({
                 {isVideo ? (
                   <video
                     src={listing.path}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover bg-no-repeat"
                     autoPlay
                     muted
                     loop
@@ -182,15 +184,15 @@ const ListingDetails = ({
                   {offer ? (
                     <div className="flex items-baseline">
                       <span className="text-2xl font-bold text-gray-900">
-                        PKR {discountPrice}
+                        Rs {discountPrice}
                       </span>
                       <span className="ml-2 text-gray-400 line-through text-sm">
-                        PKR {price}
+                        Rs {price}
                       </span>
                     </div>
                   ) : (
                     <span className="text-2xl font-bold text-gray-900">
-                      PKR {price}
+                      Rs {price}
                     </span>
                   )}
                   <div className="mt-1 text-xs text-gray-500 uppercase tracking-wide">

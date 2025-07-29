@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BsSearch, BsFilter, BsXLg } from "react-icons/bs";
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa";
-import ListingCard from "../components/ListingCard";
 import { LuSearchX } from "react-icons/lu";
 import api from "../lib/Url";
 import toast from "react-hot-toast";
 import { useMediaQuery } from "react-responsive";
+import ListingCard from "../Components/ListingCard";
 
 const Search = () => {
   const [listings, setListings] = useState([]);

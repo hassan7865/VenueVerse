@@ -6,6 +6,7 @@ import api from "../lib/Url";
 import UserProfile from "../../UserProfile";
 import toast from "react-hot-toast";
 import { CartContext } from "../context/cart";
+import { loadStripe } from "@stripe/stripe-js";
 
 const ShippingAddressDialog = ({ isOpen, onClose, initialValues }) => {
   const { cart } = useContext(CartContext);
@@ -26,9 +27,8 @@ const ShippingAddressDialog = ({ isOpen, onClose, initialValues }) => {
 
   const handleCheckout = async (shippingAddress) => {
     try {
-       
       const payload = cart.map((item) => ({
-        id:item._id,
+        id: item._id,
         name: item.name,
         price: item.price,
         quantity: item.amount || 1,
@@ -39,10 +39,8 @@ const ShippingAddressDialog = ({ isOpen, onClose, initialValues }) => {
         shippingAddress,
       });
 
-      const stripe = await (
-        await import("@stripe/stripe-js")
-      ).loadStripe(
-        "pk_test_51RpWfK7VXE97ki7VAutJgGxO4ELKW9Z7LbkdtICovMZ176hEgRKNglYChD9Jwj32ch0mxx9bFamZht7WaBOfVtWK00H2le7mN5"
+      const stripe = await loadStripe(
+       import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
       );
 
       const result = await stripe.redirectToCheckout({

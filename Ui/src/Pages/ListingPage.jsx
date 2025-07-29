@@ -65,7 +65,7 @@ const ListingPage = () => {
     };
 
     fetchData();
-  }, [params.id]);
+  }, []);
 
   const handleUrlShare = async () => {
     const url = window.location.href;

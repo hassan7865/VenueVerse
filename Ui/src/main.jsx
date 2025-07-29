@@ -5,11 +5,9 @@ import App from "./App.jsx";
 import { SidebarProvider } from "./context/sidebar.jsx";
 import { CartProvider } from "./context/cart.jsx";
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <SidebarProvider>
-      <CartProvider>
-        <App />
-      </CartProvider>
-    </SidebarProvider>
-  </StrictMode>
+  <SidebarProvider>
+    <CartProvider>
+      <App />
+    </CartProvider>
+  </SidebarProvider>
 );

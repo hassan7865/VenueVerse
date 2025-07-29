@@ -1,6 +1,3 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import Login from "./Pages/Login";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Header from "./Components/Header";
@@ -18,20 +15,18 @@ import UpdateDecorItem from "./Pages/UpdateShopItem";
 import ProductDetails from "./Pages/ProductPage";
 import UserProfileCatalogue from "./Pages/UserProfile";
 import Sidebar from "./Components/Shop/sidebar";
-import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
-import MyListing from "./Pages/mylisting";
 import ProfilePage from "./Pages/Profile";
 import ShopSearch from "./Pages/SearchShopItem";
 import UserOrdersPage from "./Pages/Order";
 import SuccessPage from "./Pages/OrderSuccessfull";
 import Dashboard from "./Pages/Dashboard";
 import Footer from "./Components/Footer";
+import { loadStripe } from "@stripe/stripe-js";
+import MyListing from "./Pages/MyListing";
 
 function App() {
-  const stripePromise = loadStripe(
-    "pk_test_51RpWfK7VXE97ki7VAutJgGxO4ELKW9Z7LbkdtICovMZ176hEgRKNglYChD9Jwj32ch0mxx9bFamZht7WaBOfVtWK00H2le7mN5"
-  );
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
   return (
     <BrowserRouter>
