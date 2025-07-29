@@ -9,6 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import api from "../lib/Url";
 import OrdersTable from "../Components/OrdersTable";
+import Loading from "../Components/Loading";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -115,14 +116,14 @@ const Dashboard = () => {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="h-32 bg-gray-100 rounded-lg animate-pulse"
-            ></div>
-          ))}
+         <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loading />
+          <p className="font-heading text-slate-900 text-lg sm:text-2xl mt-4">
+            Loading...
+          </p>
         </div>
+      </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {cardData.map((item, index) => (

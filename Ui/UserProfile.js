@@ -24,6 +24,7 @@ const UpdateUserData = (userData) => {
 
 const DeleteUser=()=>{
     localStorage.removeItem("venue_venture_user_data")
+    localStorage.removeItem("cart")
 }
 
 export default { SetUserData, GetUserData,UpdateUserData,DeleteUser };

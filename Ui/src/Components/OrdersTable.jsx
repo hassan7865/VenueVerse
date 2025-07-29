@@ -10,6 +10,7 @@ import {
 } from "react-icons/fi";
 import api from "../lib/Url";
 import toast from "react-hot-toast";
+import Loading from "./Loading";
 
 const OrdersTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -134,9 +135,13 @@ const OrdersTable = () => {
             {isLoading ? (
               <tr>
                 <td colSpan="7" className="px-6 py-8 text-center">
-                  <div className="flex justify-center items-center space-x-2">
-                    <FiLoader className="animate-spin h-5 w-5 text-gray-500" />
-                    <span>Loading orders...</span>
+                  <div className="min-h-screen flex items-center justify-center">
+                    <div className="text-center">
+                      <Loading />
+                      <p className="font-heading text-slate-900 text-lg sm:text-2xl mt-4">
+                        Loading...
+                      </p>
+                    </div>
                   </div>
                 </td>
               </tr>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaBoxOpen, FaSignOutAlt, FaUser } from "react-icons/fa";
 import UserProfile from "../../UserProfile";
 import toast from "react-hot-toast";
-import { MdInventory2 } from "react-icons/md";
+import { MdDashboard, MdInventory2 } from "react-icons/md";
 import { IoTicket } from "react-icons/io5";
 
 const ProfileOption = ({ user }) => {
@@ -91,6 +91,15 @@ const ProfileOption = ({ user }) => {
           >
             <MdInventory2 className="mr-3 text-gray-500" />
             Listing
+          </Link>
+
+           <Link
+            to="/dashboard"
+            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            onClick={() => setIsOpen(false)}
+          >
+            <MdDashboard className="mr-3 text-gray-500" />
+            Dashboard
           </Link>
 
           <button

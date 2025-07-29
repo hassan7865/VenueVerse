@@ -182,7 +182,7 @@ const UserOrdersPage = () => {
                       </div>
                       <div className="text-left sm:text-right">
                         <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                          ${order.totalAmount.toFixed(2)}
+                          Rs{order.totalAmount.toFixed(2)}
                         </p>
                         <p className="text-xs sm:text-sm text-gray-500">
                           {order.items.length} item
@@ -271,7 +271,7 @@ const UserOrdersPage = () => {
                               </span>
                               {item.product?.price && (
                                 <span className="font-bold text-gray-900 text-xs sm:text-sm">
-                                  ${item.product.price.toFixed(2)}
+                                  Rs{item.product.price.toFixed(2)}
                                 </span>
                               )}
                             </div>

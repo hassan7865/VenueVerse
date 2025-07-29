@@ -9,7 +9,8 @@ import {
   AlertCircle,
   Palette,
   List,
-  Star,
+  Tag,
+  DollarSign,
 } from "lucide-react";
 import UserProfile from "../../UserProfile";
 import api from "../lib/Url";
@@ -50,19 +51,20 @@ const UpdateDecorItem = () => {
       name: "",
       description: "",
       price: "",
+      discountPrice: "",
+      offer: false,
       category: "",
       stock: 0,
-      isFeatured: false,
     },
     mode: "onBlur",
   });
 
-  const watchFeatured = watch("isFeatured");
+  const watchOffer = watch("offer");
 
   // Custom error message component
   const ErrorMessage = ({ error }) => {
     if (!error) return null;
-    
+
     return (
       <div className="flex items-center mt-2 text-red-600">
         <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0" />
@@ -76,7 +78,7 @@ const UpdateDecorItem = () => {
       try {
         setIsFetching(true);
         const response = await api.get(`/product/${id}`);
-        
+
         if (response.data.userId !== currentUser._id) {
           toast.error("You can only edit your own items");
           navigate("/shop");
@@ -88,15 +90,20 @@ const UpdateDecorItem = () => {
           name: response.data.name,
           description: response.data.description,
           price: response.data.price,
+          discountPrice: response.data.discountPrice || "",
+          offer: !!response.data.discountPrice,
           category: response.data.category,
           stock: response.data.stock,
-          isFeatured: response.data.isFeatured,
         });
 
         // Set existing images
         setExistingImages(response.data.images || []);
       } catch (error) {
-        toast.error(error.response?.data?.message || error.message || "Failed to fetch product");
+        toast.error(
+          error.response?.data?.message ||
+            error.message ||
+            "Failed to fetch product"
+        );
         navigate("/shop");
       } finally {
         setIsFetching(false);
@@ -118,19 +125,19 @@ const UpdateDecorItem = () => {
 
     setLoading(true);
     const uploadFormData = new FormData();
-    
+
     for (let i = 0; i < imageFile.length; i++) {
       uploadFormData.append("images", imageFile[i]);
     }
 
     try {
-      const response = await api.post('/storage/upload', uploadFormData, {
+      const response = await api.post("/storage/upload", uploadFormData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
 
-      setUploadedImages(prev => [...prev, ...response.data.images]);
+      setUploadedImages((prev) => [...prev, ...response.data.images]);
       setImageFile([]);
       clearErrors("images");
     } catch (error) {
@@ -138,7 +145,9 @@ const UpdateDecorItem = () => {
         type: "manual",
         message: error.response?.data?.message || "Image upload failed",
       });
-      toast.error(error.response?.data?.message || error.message || "Image upload failed");
+      toast.error(
+        error.response?.data?.message || error.message || "Image upload failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -146,9 +155,9 @@ const UpdateDecorItem = () => {
 
   const handleDeleteImage = async (index, isExisting = false) => {
     if (isExisting) {
-      setExistingImages(prev => prev.filter((_, i) => i !== index));
+      setExistingImages((prev) => prev.filter((_, i) => i !== index));
     } else {
-      setUploadedImages(prev => prev.filter((_, i) => i !== index));
+      setUploadedImages((prev) => prev.filter((_, i) => i !== index));
     }
 
     // Check if we still have images left
@@ -177,23 +186,25 @@ const UpdateDecorItem = () => {
 
       const productData = {
         ...data,
+        // Only include discountPrice if offer is true
+        discountPrice: data.offer ? data.discountPrice : undefined,
         images: [
           ...existingImages,
-          ...uploadedImages.map(img => ({
+          ...uploadedImages.map((img) => ({
             url: img.path,
-            alt: data.name || "Event decor item"
-          }))
+            alt: data.name || "Event decor item",
+          })),
         ],
         userId: currentUser._id,
       };
 
       await api.put(`/product/${id}`, productData);
-      navigate(`/shop/${id}`);
+      navigate(`/item/${id}`);
       toast.success("Decor item updated successfully!");
     } catch (error) {
       // Handle server-side validation errors
       if (error.response?.data?.errors) {
-        error.response.data.errors.forEach(err => {
+        error.response.data.errors.forEach((err) => {
           setError(err.path, {
             type: "server",
             message: err.msg,
@@ -282,16 +293,16 @@ const UpdateDecorItem = () => {
                       Item Name <span className="text-red-500">*</span>
                     </label>
                     <input
-                      {...register("name", { 
+                      {...register("name", {
                         required: "This field is required",
                         minLength: {
                           value: 3,
-                          message: "Name must be at least 3 characters"
+                          message: "Name must be at least 3 characters",
                         },
                         maxLength: {
                           value: 100,
-                          message: "Name must be less than 100 characters"
-                        }
+                          message: "Name must be less than 100 characters",
+                        },
                       })}
                       type="text"
                       placeholder="e.g., Crystal Centerpiece, Floral Garland, etc."
@@ -307,21 +318,24 @@ const UpdateDecorItem = () => {
                       Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      {...register("description", { 
+                      {...register("description", {
                         required: "This field is required",
                         minLength: {
                           value: 10,
-                          message: "Description must be at least 10 characters"
+                          message: "Description must be at least 10 characters",
                         },
                         maxLength: {
                           value: 1000,
-                          message: "Description must be less than 1000 characters"
-                        }
+                          message:
+                            "Description must be less than 1000 characters",
+                        },
                       })}
                       rows="4"
                       placeholder="Describe your decor item in detail (materials, dimensions, colors, etc.)"
                       className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors text-slate-900 placeholder-slate-400 resize-none ${
-                        errors.description ? "border-red-500" : "border-slate-500"
+                        errors.description
+                          ? "border-red-500"
+                          : "border-slate-500"
                       }`}
                     />
                     <ErrorMessage error={errors.description} />
@@ -345,10 +359,11 @@ const UpdateDecorItem = () => {
                       Category <span className="text-red-500">*</span>
                     </label>
                     <select
-                      {...register("category", { 
+                      {...register("category", {
                         required: "Please select a category",
-                        validate: value => 
-                          EventDecorCategories.includes(value) || "Please select a valid category"
+                        validate: (value) =>
+                          EventDecorCategories.includes(value) ||
+                          "Please select a valid category",
                       })}
                       className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
                         errors.category ? "border-red-500" : "border-slate-500"
@@ -367,31 +382,32 @@ const UpdateDecorItem = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Price ($) <span className="text-red-500">*</span>
+                        Price <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        {...register("price", { 
-                          required: "This field is required",
-                          min: { 
-                            value: 0.01, 
-                            message: "Price must be greater than 0" 
-                          },
-                          max: {
-                            value: 100000,
-                            message: "Price must be less than $100,000"
-                          },
-                          pattern: {
-                            value: /^\d+(\.\d{1,2})?$/,
-                            message: "Price must be a valid number with up to 2 decimal places"
-                          }
-                        })}
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
-                          errors.price ? "border-red-500" : "border-slate-500"
-                        }`}
-                      />
+                      <div className="relative">
+                        <FaMoneyBillWave className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                        <input
+                          {...register("price", {
+                            required: "This field is required",
+                            min: {
+                              value: 0.01,
+                              message: "Price must be greater than 0",
+                            },
+                           
+                            pattern: {
+                              value: /^\d+(\.\d{1,2})?$/,
+                              message:
+                                "Price must be a valid number with up to 2 decimal places",
+                            },
+                          })}
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          className={`w-full pl-12 pr-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
+                            errors.price ? "border-red-500" : "border-slate-500"
+                          }`}
+                        />
+                      </div>
                       <ErrorMessage error={errors.price} />
                     </div>
 
@@ -400,19 +416,19 @@ const UpdateDecorItem = () => {
                         Stock Quantity
                       </label>
                       <input
-                        {...register("stock", { 
-                          min: { 
-                            value: 0, 
-                            message: "Stock cannot be negative" 
+                        {...register("stock", {
+                          min: {
+                            value: 0,
+                            message: "Stock cannot be negative",
                           },
                           max: {
                             value: 10000,
-                            message: "Stock must be less than 10,000"
+                            message: "Stock must be less than 10,000",
                           },
                           pattern: {
                             value: /^[0-9]+$/,
-                            message: "Stock must be a whole number"
-                          }
+                            message: "Stock must be a whole number",
+                          },
                         })}
                         type="number"
                         className={`w-full px-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
@@ -423,10 +439,11 @@ const UpdateDecorItem = () => {
                     </div>
                   </div>
 
+                  {/* Discount Offer Section */}
                   <div>
                     <label className="flex items-center space-x-3 cursor-pointer p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
                       <Controller
-                        name="isFeatured"
+                        name="offer"
                         control={control}
                         render={({ field }) => (
                           <input
@@ -437,16 +454,55 @@ const UpdateDecorItem = () => {
                           />
                         )}
                       />
-                      <Star className="text-slate-600 w-5 h-5" />
+                      <Tag className="text-slate-600 w-5 h-5" />
                       <div>
                         <span className="font-medium text-slate-900">
-                          Feature this item
+                          Offer a discount
                         </span>
                         <p className="text-sm text-slate-500">
-                          Show this item in featured sections
+                          Provide a special price for this item
                         </p>
                       </div>
                     </label>
+
+                    {watchOffer && (
+                      <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Discount Price 
+                          <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <FaMoneyBillWave className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                          <input
+                            {...register("discountPrice", {
+                              required:
+                                "Discount price is required when offer is checked",
+                              validate: (value) => {
+                                const price = watch("price");
+                                if (!price)
+                                  return "Please enter regular price first";
+                                if (parseFloat(value) >= parseFloat(price)) {
+                                  return "Discount price must be less than regular price";
+                                }
+                                if (parseFloat(value) <= 0) {
+                                  return "Discount price must be greater than 0";
+                                }
+                                return true;
+                              },
+                            })}
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            className={`w-full pl-12 pr-4 py-3 border bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors ${
+                              errors.discountPrice
+                                ? "border-red-500"
+                                : "border-slate-300"
+                            }`}
+                          />
+                        </div>
+                        <ErrorMessage error={errors.discountPrice} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -459,35 +515,55 @@ const UpdateDecorItem = () => {
                   <div className="flex items-center space-x-3">
                     <Image className="w-5 h-5 text-slate-600" />
                     <h2 className="text-lg font-semibold text-slate-900">
-                      Product Images
+                      Media <span className="text-red-500">*</span>
                     </h2>
                   </div>
                 </div>
                 <div className="p-6">
-                  <div className={`border-2 border-dashed rounded-lg p-8 text-center hover:border-slate-400 transition-colors ${
-                    errors.images ? "border-red-500 bg-red-50" : "border-slate-300"
-                  }`}>
+                  <div
+                    className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add(
+                        "border-slate-400",
+                        "bg-slate-50"
+                      );
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        "border-slate-400",
+                        "bg-slate-50"
+                      );
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        "border-slate-400",
+                        "bg-slate-50"
+                      );
+                      if (e.dataTransfer.files.length > 0) {
+                        setImageFile(e.dataTransfer.files);
+                      }
+                    }}
+                  >
                     <div className="w-12 h-12 mx-auto bg-slate-100 rounded-lg flex items-center justify-center mb-4">
                       <Plus className="w-6 h-6 text-slate-600" />
                     </div>
                     <p className="text-sm text-slate-600 mb-4">
-                      <span className="font-medium">Click to upload</span> or drag
-                      and drop
+                      <span className="font-medium">Click to upload</span> or
+                      drag and drop
                     </p>
                     <p className="text-xs text-slate-500 mb-4">
-                      PNG, JPG up to 10MB. First image will be the main display.
+                      PNG, JPG, GIF, MP4 up to 10MB. First image will be the
+                      cover.
                     </p>
 
                     <input
                       type="file"
                       multiple
-                      accept="image/*"
-                      onChange={(e) => {
-                        setImageFile(e.target.files);
-                        if (e.target.files.length > 0) {
-                          clearErrors("images");
-                        }
-                      }}
+                      accept="image/*,video/*"
+                      onChange={(e) => setImageFile(e.target.files)}
                       className="hidden"
                       id="file-upload"
                     />
@@ -520,83 +596,89 @@ const UpdateDecorItem = () => {
                     )}
                   </div>
 
-                  <ErrorMessage error={errors.images} />
-
-                  {/* Existing Images */}
-                  {existingImages.length > 0 && (
-                    <div className="mt-6 space-y-3">
-                      <h3 className="text-sm font-medium text-slate-900">
-                        Current Images
-                      </h3>
-                      {existingImages.map((img, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg"
-                        >
-                          <img
-                            src={img.url}
-                            alt={img.alt || "Existing decor item"}
-                            className="w-12 h-12 object-cover rounded-lg"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">
-                              {index === 0 && (
-                                <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
-                              )}
-                              {img.alt || `Image ${index + 1}`}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {index === 0 ? "Main image" : `Image ${index + 1}`}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteImage(index, true)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Newly Uploaded Images */}
+                  {/* Uploaded Media */}
                   {uploadedImages.length > 0 && (
                     <div className="mt-6 space-y-3">
                       <h3 className="text-sm font-medium text-slate-900">
-                        New Images
+                        Uploaded Media (Drag to reorder)
                       </h3>
-                      {uploadedImages.map((imgSrc, index) => (
-                        <div
-                          key={imgSrc.filename}
-                          className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg"
-                        >
-                          <img
-                            src={imgSrc.path}
-                            alt="Uploaded decor item"
-                            className="w-12 h-12 object-cover rounded-lg"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">
-                              {existingImages.length === 0 && index === 0 && (
-                                <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
-                              )}
-                              {imgSrc.filename}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              Image {existingImages.length + index + 1}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteImage(index)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      <div className="space-y-3">
+                        {uploadedImages.map((media, index) => (
+                          <div
+                            key={media.filename}
+                            className={`flex items-center space-x-3 p-3 border border-slate-200 rounded-lg ${
+                              index === 0 ? "border-amber-300 bg-amber-50" : ""
+                            }`}
+                            draggable
+                            onDragStart={(e) =>
+                              e.dataTransfer.setData("text/plain", index)
+                            }
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.classList.add("bg-slate-100");
+                            }}
+                            onDragLeave={(e) => {
+                              e.currentTarget.classList.remove("bg-slate-100");
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.classList.remove("bg-slate-100");
+                              const draggedIndex = parseInt(
+                                e.dataTransfer.getData("text/plain")
+                              );
+                              const newImages = [...uploadedImages];
+                              const [removed] = newImages.splice(
+                                draggedIndex,
+                                1
+                              );
+                              newImages.splice(index, 0, removed);
+                              setUploadedImages(newImages);
+                            }}
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                            {media.mimetype.startsWith("image/") ? (
+                              <img
+                                src={media.path}
+                                alt="Uploaded"
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
+                                <span className="text-xs text-slate-500">
+                                  Video
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">
+                                {index === 0 && (
+                                  <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
+                                )}
+                                {media.filename}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {index === 0
+                                  ? "Cover media"
+                                  : `Media ${index + 1}`}
+                                {media.mimetype.startsWith("video/") &&
+                                  " (Video)"}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteImage(index)}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {uploadError.isError && (
+                    <div className="mt-4 text-red-600 text-sm">
+                      <AlertCircle className="inline w-4 h-4 mr-1" />
+                      {uploadError.message}
                     </div>
                   )}
                 </div>
@@ -607,7 +689,11 @@ const UpdateDecorItem = () => {
                 <div className="p-6">
                   <button
                     type="submit"
-                    disabled={loading || formSubmitLoading || (existingImages.length + uploadedImages.length < 1)}
+                    disabled={
+                      loading ||
+                      formSubmitLoading ||
+                      existingImages.length + uploadedImages.length < 1
+                    }
                     className="w-full flex items-center justify-center px-6 py-4 bg-slate-900 text-white text-lg font-semibold rounded-lg hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
                   >
                     {formSubmitLoading ? (
@@ -620,7 +706,8 @@ const UpdateDecorItem = () => {
                     )}
                   </button>
                   <p className="text-xs text-slate-500 text-center mt-3">
-                    By updating this item, you agree to our terms and conditions.
+                    By updating this item, you agree to our terms and
+                    conditions.
                   </p>
                 </div>
               </div>

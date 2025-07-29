@@ -234,7 +234,7 @@ const Shop = () => {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  onClick={() => navigate("/search")}
+                  onClick={() => navigate("/search_shop")}
                   className="group inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <FiSearch className="mr-2 w-5 h-5" />
@@ -242,7 +242,7 @@ const Shop = () => {
                   <FiArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button
-                  onClick={() => navigate("/create_post")}
+                  onClick={() => navigate("/create_shopitem")}
                   className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/20 text-white font-medium rounded-lg hover:border-white/40 hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
                 >
                   <FiPlusCircle className="mr-2 w-5 h-5" />
@@ -253,15 +253,15 @@ const Shop = () => {
               <div className="flex items-center space-x-8 text-sm text-gray-400">
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <span>1000+ Products</span>
+                  <span className="text-white">1000+ Products</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                  <span>Premium Quality</span>
+                  <span className="text-white">Premium Quality</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
-                  <span>Trusted Sellers</span>
+                  <span className="text-white">Trusted Sellers</span>
                 </div>
               </div>
             </div>
@@ -314,7 +314,7 @@ const Shop = () => {
                       <button
                         onClick={() =>
                           navigate(
-                            `/search?category=${encodeURIComponent(category)}`
+                            `/search_shop`
                           )
                         }
                         className="group inline-flex items-center px-6 py-3 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-lg hover:shadow-xl"
@@ -387,7 +387,7 @@ const Shop = () => {
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl opacity-20 blur-xl"></div>
               <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] bg-gray-200">
                 <img
-                  src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?auto=format&fit=crop&w=800&q=80"
+                  src="https://www.reveriesocial.com/wp-content/uploads/2024/01/Bold-Color-Maximalist.webp"
                   alt="Selling products"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -401,7 +401,7 @@ const Shop = () => {
       {/* Final CTA */}
       <section className="py-24 bg-gray-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1770&q=80')] bg-cover bg-center opacity-10"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+        <div className="absolute inset-0 bg-brand-blue "></div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 text-center">
           <div className="space-y-8 max-w-4xl mx-auto">
@@ -424,14 +424,14 @@ const Shop = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button
-                onClick={() => navigate("/search")}
+                onClick={() => navigate("/search_shop")}
                 className="group inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl"
               >
                 Browse Products
                 <FiArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
               <button
-                onClick={() => navigate("/create_post")}
+                onClick={() => navigate("/create_shopitem")}
                 className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/20 text-white font-medium rounded-lg hover:border-white/40 hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
               >
                 <FiPlusCircle className="mr-2 w-5 h-5" />

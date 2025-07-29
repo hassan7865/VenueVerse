@@ -13,6 +13,7 @@ const ListingCard = ({ listing }) => {
     capacity,
     address,
     price,
+    discountPrice,
     title,
     type,
     _id,
@@ -21,7 +22,12 @@ const ListingCard = ({ listing }) => {
     offer,
   } = listing;
 
-  const discountPercentage = 20;
+  // Calculate discount percentage from discountPrice field
+  const discountPercent =
+    offer && discountPrice
+      ? Math.round(((price - discountPrice) / price) * 100)
+      : 0;
+
   const formatPrice = (amount) => {
     return new Intl.NumberFormat("en-PK", {
       style: "currency",
@@ -33,12 +39,6 @@ const ListingCard = ({ listing }) => {
       .replace("PKR", "PKR ");
   };
 
-  const discountPrice = offer
-    ? price - (price * discountPercentage) / 100
-    : price;
-
- 
-
   return (
     <div className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-all duration-200 hover:shadow-lg group cursor-pointer h-full flex flex-col min-h-[520px]">
       {/* Image Container */}
@@ -46,12 +46,25 @@ const ListingCard = ({ listing }) => {
         className="relative overflow-hidden h-48 w-full rounded-t-lg flex-shrink-0"
         onClick={() => navigate(`/listing/${_id}`)}
       >
-        <img
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          src={imgUrl[0]?.path || "/placeholder-image.jpg"}
-          alt={title}
-          loading="lazy"
-        />
+        {imgUrl[0] &&
+        (imgUrl[0].type?.startsWith("video") ||
+          /\.(mp4|webm|mov)$/i.test(imgUrl[0].path)) ? (
+          <video
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            src={imgUrl[0].path}
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        ) : (
+          <img
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            src={imgUrl[0]?.path || "/placeholder-image.jpg"}
+            alt={title}
+            loading="lazy"
+          />
+        )}
 
         {/* Type Badge */}
         <div className="absolute top-3 left-3 bg-white text-gray-700 text-xs font-medium px-3 py-1.5 rounded-md shadow-sm border capitalize">
@@ -59,9 +72,9 @@ const ListingCard = ({ listing }) => {
         </div>
 
         {/* Discount Badge */}
-        {offer && (
+        {offer && discountPrice && (
           <div className="absolute top-3 right-3 bg-brand-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-sm">
-            {discountPercentage}% OFF
+            {discountPercent}% OFF
           </div>
         )}
       </div>
@@ -80,22 +93,38 @@ const ListingCard = ({ listing }) => {
           {type === "venue" ? (
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
-                <FaLocationDot className="mr-3 text-brand-blue-600 flex-shrink-0" size={14} />
+                <FaLocationDot
+                  className="mr-3 text-brand-blue-600 flex-shrink-0"
+                  size={14}
+                />
                 <span className="line-clamp-1">{venuetype || "Venue"}</span>
               </div>
               <div className="flex items-center text-sm text-gray-600">
-                <FaLocationArrow className="mr-3 text-brand-blue-600 flex-shrink-0" size={14} />
-                <span className="line-clamp-1">{address || "Address not specified"}</span>
+                <FaLocationArrow
+                  className="mr-3 text-brand-blue-600 flex-shrink-0"
+                  size={14}
+                />
+                <span className="line-clamp-1">
+                  {address || "Address not specified"}
+                </span>
               </div>
             </div>
           ) : (
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
-                <FaLocationArrow className="mr-3 text-brand-blue-600 flex-shrink-0" size={14} />
-                <span className="line-clamp-1">{address || "Service location"}</span>
+                <FaLocationArrow
+                  className="mr-3 text-brand-blue-600 flex-shrink-0"
+                  size={14}
+                />
+                <span className="line-clamp-1">
+                  {address || "Service location"}
+                </span>
               </div>
               <div className="flex items-center text-sm text-gray-600">
-                <FaLocationDot className="mr-3 text-brand-blue-600 flex-shrink-0" size={14} />
+                <FaLocationDot
+                  className="mr-3 text-brand-blue-600 flex-shrink-0"
+                  size={14}
+                />
                 <span className="line-clamp-1">Professional Service</span>
               </div>
             </div>
@@ -134,16 +163,20 @@ const ListingCard = ({ listing }) => {
 
         {/* Price Section */}
         <div className="pt-4 border-t border-gray-100 mb-4">
-          {offer ? (
+          {offer && discountPrice ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xl font-semibold text-brand-blue-600">{formatPrice(discountPrice)}</span>
+                <span className="text-xl font-semibold text-brand-blue-600">
+                  {formatPrice(discountPrice)}
+                </span>
                 <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
-                  {discountPercentage}% OFF
+                  {discountPercent}% OFF
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-400 line-through">{formatPrice(price)}</span>
+                <span className="text-gray-400 line-through">
+                  {formatPrice(price)}
+                </span>
                 <span className="text-green-600 font-medium">
                   Save {formatPrice(price - discountPrice)}
                 </span>
@@ -151,13 +184,12 @@ const ListingCard = ({ listing }) => {
             </div>
           ) : (
             <div>
-              <span className="text-xl font-semibold text-brand-blue-600">{formatPrice(price)}</span>
+              <span className="text-xl font-semibold text-brand-blue-600">
+                {formatPrice(price)}
+              </span>
             </div>
           )}
         </div>
-
-      
-      
       </div>
     </div>
   );

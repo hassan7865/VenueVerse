@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { BsSearch, BsFilter, BsXLg } from "react-icons/bs";
 import { FaAngleLeft, FaAngleRight } from "react-icons/fa";
 import ListingCard from "../components/ListingCard";
-import Footer from "../Components/Footer";
 import { LuSearchX } from "react-icons/lu";
 import api from "../lib/Url";
 import toast from "react-hot-toast";
@@ -93,7 +92,7 @@ const Search = () => {
         });
 
         const url = `/post?${queryParams.toString()}`;
-        console.log('API URL:', url); // Debug log
+       
 
         const res = await api.get(url);
 
@@ -465,7 +464,6 @@ const Search = () => {
           </div>
         </div>
       </section>
-      <Footer />
     </>
   );
 };

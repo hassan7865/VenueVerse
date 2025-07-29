@@ -27,7 +27,7 @@ import {
   IoLocationOutline,
   IoBookmarkOutline,
 } from "react-icons/io5";
-import { BsGrid1X2 } from "react-icons/bs";
+import { BsGrid1X2, BsWhatsapp } from "react-icons/bs";
 import { BookIcon } from "lucide-react";
 import BookingDialog from "./Booking";
 import { Link } from "react-router-dom";
@@ -122,16 +122,33 @@ const ListingDetails = ({
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-gray-900 to-gray-800">
         <Slider {...settings} className="z-10">
-          {imgUrl?.map((listing, index) => (
-            <div key={index} className="relative h-[80vh] w-full">
-              <img
-                src={listing.path}
-                alt={`Listing ${index + 1}`}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
-            </div>
-          ))}
+          {imgUrl?.map((listing, index) => {
+            const isVideo =
+              listing.type?.startsWith("video") ||
+              listing.path?.match(/\.(mp4|webm|mov)$/i);
+
+            return (
+              <div key={index} className="relative h-[80vh] w-full">
+                {isVideo ? (
+                  <video
+                    src={listing.path}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={listing.path}
+                    alt={`Listing ${index + 1}`}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+              </div>
+            );
+          })}
         </Slider>
 
         {/* Title overlay */}
@@ -292,13 +309,26 @@ const ListingDetails = ({
                   </div>
                 </div>
 
-                <div className="mt-4 flex">
+                <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
                   <button
                     onClick={() => navigate(`/userprofile/${userId}`)}
-                    className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2.5 px-4 rounded-lg font-medium text-sm transition-colors flex items-center justify-center"
+                    className="w-full sm:w-1/2 bg-gray-900 hover:bg-gray-800 text-white py-3 px-4 rounded-lg font-medium text-sm flex items-center justify-center transition-colors"
                   >
-                    <FiUser className="mr-2" />
+                    <FiUser className="mr-2 text-lg" />
                     Visit Profile
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const currentUrl = window.location.href;
+                      const message = `Hi, I’m interested in your listing! Here’s the link: ${currentUrl}`;
+                      const url = `https://wa.me/${owner.phone}?text=${encodeURIComponent(message)}`;
+                      window.open(url, "_blank");
+                    }}
+                    className="w-full sm:w-1/2 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-medium text-sm flex items-center justify-center transition-colors"
+                  >
+                    <BsWhatsapp className="mr-2 text-lg" />
+                    Contact
                   </button>
                 </div>
               </div>

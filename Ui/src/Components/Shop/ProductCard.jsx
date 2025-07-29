@@ -16,6 +16,8 @@ const ProductCard = ({ product, handleShopItemDelete }) => {
     name,
     description,
     price,
+    discountPrice,
+    offer,
     category,
     images,
     stock,
@@ -27,6 +29,11 @@ const ProductCard = ({ product, handleShopItemDelete }) => {
   const navigate = useNavigate();
   const currentUser = UserProfile.GetUserData();
 
+  // Calculate discount percentage same as PostCard
+  const discountPercent = offer
+    ? Math.round(((price - discountPrice) / price) * 100)
+    : 0;
+
   return (
     <div
       onClick={() => {
@@ -34,6 +41,16 @@ const ProductCard = ({ product, handleShopItemDelete }) => {
       }}
       className="relative flex flex-col bg-white rounded-2xl shadow-sm hover:shadow-md transition duration-300 border h-full"
     >
+      {/* Offer Ribbon - same as PostCard */}
+      {offer && (
+        <div className="absolute top-3 right-3 z-10">
+          <span className="flex items-center bg-brand-blue text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
+            <FaStar className="mr-1" />
+            {discountPercent}% OFF
+          </span>
+        </div>
+      )}
+
       {/* Image */}
       <div className="relative h-48 sm:h-56 md:h-60 w-full overflow-hidden cursor-pointer">
         <img
@@ -106,14 +123,19 @@ const ProductCard = ({ product, handleShopItemDelete }) => {
           </div>
         </div>
 
-        {/* Price + Featured */}
+        {/* Price + Featured - Updated with discount logic */}
         <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
           <div>
             <div className="flex items-baseline">
               <p className="text-lg sm:text-xl font-bold text-brand-blue">
-                Rs{price.toLocaleString()}
+                Rs{offer ? discountPrice.toLocaleString() : price.toLocaleString()}
               </p>
             </div>
+            {offer && (
+              <p className="text-xs text-gray-400 line-through">
+                Rs{price.toLocaleString()}
+              </p>
+            )}
           </div>
 
           {isFeatured && (

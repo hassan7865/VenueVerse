@@ -6,11 +6,13 @@ import { CartContext } from "../../context/cart";
 import { SidebarContext } from "../../context/sidebar";
 import UserProfile from "../../../UserProfile";
 import ShippingAddressDialog from "../AddressModal";
+import { useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
   const { isOpen, handleClose } = useContext(SidebarContext);
   const { cart, clearCart, itemAmount, total } = useContext(CartContext);
   const [IsShowAddress, setIsShowAddress] = useState(false);
+  const navigate = useNavigate()
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
@@ -21,8 +23,10 @@ const Sidebar = () => {
 
   const handleSubmit = () => {
     if (cart.length === 0) return;
+    if(!UserProfile.GetUserData()){
+      navigate("/login")
+    }
     setIsShowAddress(true);
-    console.log(UserProfile.GetUserData())
   };
 
 
@@ -95,7 +99,7 @@ const Sidebar = () => {
             <div className="border-t border-gray-200 p-6 bg-gray-50">
               <div className="flex items-center justify-between mb-6">
                 <div className="text-lg font-semibold text-gray-800">
-                  Subtotal: ${parseFloat(total).toFixed(2)}
+                  Subtotal: Rs{parseFloat(total).toFixed(2)}
                 </div>
                 <button
                   onClick={clearCart}

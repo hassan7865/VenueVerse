@@ -1,25 +1,32 @@
-import React, {  useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import { Plus, Image } from 'lucide-react';
 import { CartContext } from "../../context/cart";
 import { useNavigate } from "react-router-dom";
 
 const ProductListingCard = ({ product }) => {
- const { addToCart } = useContext(CartContext);
-  const navigate = useNavigate()
+  const { addToCart } = useContext(CartContext);
+  const navigate = useNavigate();
 
-  const { _id, images, category, name, price, stock } = product;
+  const { _id, images, category, name, price, discountPrice, stock, offer } = product;
+
+  // Calculate discount percentage from discountPrice field
+  const discountPercent = offer && discountPrice
+    ? Math.round(((price - discountPrice) / price) * 100)
+    : 0;
 
   const productImages = images && images.length > 0 ? images : [];
   const firstImage = productImages.length > 0 ? productImages[0] : null;
   const hasMultipleImages = productImages.length > 1;
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-PK', {
-      style: 'currency',
-      currency: 'PKR',
+  const formatPrice = (amount) => {
+    return new Intl.NumberFormat("en-PK", {
+      style: "currency",
+      currency: "PKR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(price);
+    })
+      .format(amount)
+      .replace("PKR", "PKR ");
   };
 
   const getImageSrc = () => {
@@ -33,11 +40,9 @@ const ProductListingCard = ({ product }) => {
     addToCart(product, _id);
   };
 
- 
-
   return (
     <div
-      onClick={()=>navigate(`/item/${_id}`)}
+      onClick={() => navigate(`/item/${_id}`)}
       className="group relative flex flex-col h-[420px] rounded-xl overflow-hidden border border-gray-150 hover:border-gray-250 bg-white shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
     >
       {/* Image Section - Fixed Height */}
@@ -67,9 +72,16 @@ const ProductListingCard = ({ product }) => {
           </div>
         )}
 
-        {/* Multiple Images Badge - Refined */}
+        {/* Discount Badge - Uses actual discountPrice field */}
+        {offer && discountPrice && (
+          <div className="absolute top-3 right-3 bg-brand-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-md shadow-sm">
+            {discountPercent}% OFF
+          </div>
+        )}
+
+        {/* Multiple Images Badge - Moved down when discount is present */}
         {hasMultipleImages && (
-          <div className="absolute top-3 right-3">
+          <div className={`absolute right-3 ${offer && discountPrice ? 'top-14' : 'top-3'}`}>
             <span className="bg-blue-600 text-white text-xs font-medium px-2.5 py-1.5 rounded-md shadow-sm flex items-center gap-1">
               <Image className="w-3 h-3" />
               +{productImages.length - 1}
@@ -105,11 +117,33 @@ const ProductListingCard = ({ product }) => {
           </h3>
         </div>
 
-        {/* Price and Photos Info - Fixed Height */}
-        <div className="mb-4 h-12 flex flex-col justify-start">
-          <span className="text-2xl font-bold text-slate-900 tracking-tight">{formatPrice(price)}</span>
-          {hasMultipleImages && (
-            <p className="text-sm text-slate-500 mt-1 font-medium">{productImages.length} photos available</p>
+        {/* Price Section - Updated with discount logic using discountPrice field */}
+        <div className="mb-4 flex flex-col justify-start">
+          {offer && discountPrice ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-2xl font-bold text-slate-900 tracking-tight">{formatPrice(discountPrice)}</span>
+                <span className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
+                  {discountPercent}% OFF
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-400 line-through">{formatPrice(price)}</span>
+                <span className="text-green-600 font-medium">
+                  Save {formatPrice(price - discountPrice)}
+                </span>
+              </div>
+              {hasMultipleImages && (
+                <p className="text-sm text-slate-500 mt-1 font-medium">{productImages.length} photos available</p>
+              )}
+            </div>
+          ) : (
+            <div>
+              <span className="text-2xl font-bold text-slate-900 tracking-tight">{formatPrice(price)}</span>
+              {hasMultipleImages && (
+                <p className="text-sm text-slate-500 mt-1 font-medium">{productImages.length} photos available</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -137,4 +171,4 @@ const ProductListingCard = ({ product }) => {
   );
 };
 
-export default ProductListingCard
+export default ProductListingCard;

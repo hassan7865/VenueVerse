@@ -1,5 +1,4 @@
 import { useNavigate } from "react-router-dom";
-import Footer from "../Components/Footer";
 import OfferedListing from "../Components/OfferedListing";
 import VenueListing from "../Components/VenueListing";
 import ServiceListing from "../Components/ServiceListing";
@@ -51,15 +50,15 @@ const Home = () => {
               <div className="flex items-center space-x-8 text-sm text-gray-400">
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <span>1000+ Venues</span>
+                  <span className="text-white">1000+ Venues</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                  <span>500+ Services</span>
+                  <span className="text-white">500+ Services</span>
                 </div>
                 <div className="flex items-center">
                   <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
-                  <span>Trusted Platform</span>
+                  <span className="text-white">Trusted Platform</span>
                 </div>
               </div>
             </div>
@@ -130,7 +129,7 @@ const Home = () => {
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl opacity-20 blur-xl"></div>
               <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] bg-gray-200">
                 <img 
-                  src="https://images.unsplash.com/photo-1527525443983-6e60c75fff46?auto=format&fit=crop&w=800&q=80" 
+                  src="https://media.istockphoto.com/id/1380516073/photo/female-party-planner-arranging-decorations-for-a-child-birthday-party.jpg?s=612x612&w=0&k=20&c=7LWTCxgrl-8VmX8J0YToQU69_HJeBhj47ufevbxQtFU=" 
                   alt="Event services" 
                   className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -168,7 +167,7 @@ const Home = () => {
               <div className="absolute -inset-4 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl opacity-20 blur-xl"></div>
               <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3] bg-gray-200">
                 <img 
-                  src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80" 
+                  src="https://media.istockphoto.com/id/160985444/photo/wedding-event-decorations.jpg?s=612x612&w=0&k=20&c=NEIxzLRkoryINIRbVhvUsAxOOo3hV-byfB-zDwHIcA4=" 
                   alt="Event venue" 
                   className="absolute inset-0 w-full h-full object-cover"
                 />
@@ -236,7 +235,7 @@ const Home = () => {
       {/* Final CTA */}
       <section className="py-24 bg-gray-900 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&w=1770&q=80')] bg-cover bg-center opacity-10"></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+        <div className="absolute inset-0 bg-brand-blue"></div>
         
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 text-center">
           <div className="space-y-8 max-w-4xl mx-auto">
@@ -290,8 +289,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 };

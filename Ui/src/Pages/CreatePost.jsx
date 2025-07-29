@@ -23,6 +23,7 @@ import UserProfile from "../../UserProfile";
 import api from "../lib/Url";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { FaMoneyBillWave } from "react-icons/fa";
 
 const VenueTypes = [
   "Banquet Halls",
@@ -39,11 +40,14 @@ const VenueTypes = [
 const CreatePost = () => {
   const currentUser = UserProfile.GetUserData();
   const [imageFile, setImageFile] = useState([]);
-  const [uploadError, setUploadError] = useState({ isError: false, message: "" });
+  const [uploadError, setUploadError] = useState({
+    isError: false,
+    message: "",
+  });
   const [formSubmitLoading, setFormSubmitLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadedImages, setUploadedImages] = useState([]);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const {
     register,
@@ -62,9 +66,9 @@ const CreatePost = () => {
       operationDays: [],
       operationHours: {
         open: "",
-        close: ""
-      }
-    }
+        close: "",
+      },
+    },
   });
 
   const watchType = watch("type");
@@ -76,35 +80,39 @@ const CreatePost = () => {
 
     setLoading(true);
     const uploadFormData = new FormData();
-    
+
     for (let i = 0; i < imageFile.length; i++) {
       uploadFormData.append("images", imageFile[i]);
     }
 
     try {
-      const response = await api.post('/storage/upload', uploadFormData, {
+      const response = await api.post("/storage/upload", uploadFormData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
 
-      setUploadedImages(prev => [...prev, ...response.data.images]);
+      setUploadedImages((prev) => [...prev, ...response.data.images]);
       setImageFile([]);
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || "Image upload failed");
+      toast.error(
+        error.response?.data?.message || error.message || "Image upload failed"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteImage = async (index) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
     console.log("Image deleted successfully!");
   };
 
   const onSubmit = async (data) => {
     if (uploadedImages.length < 1) {
-      toast.error("Please upload at least one image", { position: "top-right" });
+      toast.error("Please upload at least one image", {
+        position: "top-right",
+      });
       return;
     }
 
@@ -198,16 +206,16 @@ const CreatePost = () => {
                       Title <span className="text-red-500">*</span>
                     </label>
                     <input
-                      {...register("title", { 
+                      {...register("title", {
                         required: "Title is required",
                         minLength: {
                           value: 5,
-                          message: "Title must be at least 5 characters"
+                          message: "Title must be at least 5 characters",
                         },
                         maxLength: {
                           value: 100,
-                          message: "Title must not exceed 100 characters"
-                        }
+                          message: "Title must not exceed 100 characters",
+                        },
                       })}
                       type="text"
                       placeholder="Enter your listing title"
@@ -226,16 +234,17 @@ const CreatePost = () => {
                       Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                      {...register("description", { 
+                      {...register("description", {
                         required: "Description is required",
                         minLength: {
                           value: 20,
-                          message: "Description must be at least 20 characters"
+                          message: "Description must be at least 20 characters",
                         },
                         maxLength: {
                           value: 1000,
-                          message: "Description must not exceed 1000 characters"
-                        }
+                          message:
+                            "Description must not exceed 1000 characters",
+                        },
                       })}
                       rows="4"
                       placeholder="Describe your service or venue in detail"
@@ -244,7 +253,9 @@ const CreatePost = () => {
                     {errors.description && (
                       <div className="flex items-center mt-2 text-red-600">
                         <AlertCircle className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{errors.description.message}</span>
+                        <span className="text-sm">
+                          {errors.description.message}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -341,7 +352,9 @@ const CreatePost = () => {
                             />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-medium text-slate-900">Venue</h3>
+                            <h3 className="font-medium text-slate-900">
+                              Venue
+                            </h3>
                             <p className="text-sm text-slate-500 mt-1">
                               Event spaces, meeting rooms, or rental properties
                             </p>
@@ -373,12 +386,12 @@ const CreatePost = () => {
                         Address <span className="text-red-500">*</span>
                       </label>
                       <input
-                        {...register("address", { 
+                        {...register("address", {
                           required: "Address is required for venues",
                           minLength: {
                             value: 10,
-                            message: "Address must be at least 10 characters"
-                          }
+                            message: "Address must be at least 10 characters",
+                          },
                         })}
                         type="text"
                         placeholder="Enter venue address"
@@ -387,7 +400,9 @@ const CreatePost = () => {
                       {errors.address && (
                         <div className="flex items-center mt-2 text-red-600">
                           <AlertCircle className="w-4 h-4 mr-2" />
-                          <span className="text-sm">{errors.address.message}</span>
+                          <span className="text-sm">
+                            {errors.address.message}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -399,12 +414,12 @@ const CreatePost = () => {
                           Area (sqft) <span className="text-red-500">*</span>
                         </label>
                         <input
-                          {...register("area", { 
+                          {...register("area", {
                             required: "Area is required",
                             min: {
                               value: 1,
-                              message: "Area must be greater than 0"
-                            }
+                              message: "Area must be greater than 0",
+                            },
                           })}
                           type="number"
                           placeholder="Enter area in sqft"
@@ -413,7 +428,9 @@ const CreatePost = () => {
                         {errors.area && (
                           <div className="flex items-center mt-2 text-red-600">
                             <AlertCircle className="w-4 h-4 mr-2" />
-                            <span className="text-sm">{errors.area.message}</span>
+                            <span className="text-sm">
+                              {errors.area.message}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -424,12 +441,12 @@ const CreatePost = () => {
                           Capacity <span className="text-red-500">*</span>
                         </label>
                         <input
-                          {...register("capacity", { 
+                          {...register("capacity", {
                             required: "Capacity is required",
                             min: {
                               value: 1,
-                              message: "Capacity must be at least 1"
-                            }
+                              message: "Capacity must be at least 1",
+                            },
                           })}
                           type="number"
                           placeholder="Enter capacity"
@@ -438,7 +455,9 @@ const CreatePost = () => {
                         {errors.capacity && (
                           <div className="flex items-center mt-2 text-red-600">
                             <AlertCircle className="w-4 h-4 mr-2" />
-                            <span className="text-sm">{errors.capacity.message}</span>
+                            <span className="text-sm">
+                              {errors.capacity.message}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -448,8 +467,8 @@ const CreatePost = () => {
                           Venue Type <span className="text-red-500">*</span>
                         </label>
                         <select
-                          {...register("venuetype", { 
-                            required: "Venue type is required"
+                          {...register("venuetype", {
+                            required: "Venue type is required",
                           })}
                           className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-colors bg-white"
                         >
@@ -463,7 +482,9 @@ const CreatePost = () => {
                         {errors.venuetype && (
                           <div className="flex items-center mt-2 text-red-600">
                             <AlertCircle className="w-4 h-4 mr-2" />
-                            <span className="text-sm">{errors.venuetype.message}</span>
+                            <span className="text-sm">
+                              {errors.venuetype.message}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -478,7 +499,8 @@ const CreatePost = () => {
                   <div className="flex items-center space-x-3">
                     <Clock className="w-5 h-5 text-slate-600" />
                     <h2 className="text-lg font-semibold text-slate-900">
-                      Operational Days & Hours <span className="text-red-500">*</span>
+                      Operational Days & Hours{" "}
+                      <span className="text-red-500">*</span>
                     </h2>
                   </div>
                 </div>
@@ -486,7 +508,8 @@ const CreatePost = () => {
                   {/* Days of Operation */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Select Operational Days <span className="text-red-500">*</span>
+                      Select Operational Days{" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {[
@@ -510,7 +533,7 @@ const CreatePost = () => {
                               const currentDays = watch("operationDays") || [];
                               const updatedDays = e.target.checked
                                 ? [...currentDays, day]
-                                : currentDays.filter(d => d !== day);
+                                : currentDays.filter((d) => d !== day);
                               setValue("operationDays", updatedDays);
                             }}
                             className="form-checkbox h-4 w-4 text-slate-900 border-slate-300"
@@ -522,7 +545,9 @@ const CreatePost = () => {
                     {errors.operationDays && (
                       <div className="flex items-center mt-2 text-red-600">
                         <AlertCircle className="w-4 h-4 mr-2" />
-                        <span className="text-sm">Please select at least one operational day</span>
+                        <span className="text-sm">
+                          Please select at least one operational day
+                        </span>
                       </div>
                     )}
                   </div>
@@ -534,7 +559,7 @@ const CreatePost = () => {
                         Opening Time <span className="text-red-500">*</span>
                       </label>
                       <input
-                        {...register("operationHours.open", { 
+                        {...register("operationHours.open", {
                           required: "Opening time is required",
                           validate: (value) => {
                             const closeTime = watch("operationHours.close");
@@ -542,7 +567,7 @@ const CreatePost = () => {
                               return "Opening time must be before closing time";
                             }
                             return true;
-                          }
+                          },
                         })}
                         type="time"
                         className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
@@ -550,7 +575,9 @@ const CreatePost = () => {
                       {errors.operationHours?.open && (
                         <div className="flex items-center mt-2 text-red-600">
                           <AlertCircle className="w-4 h-4 mr-2" />
-                          <span className="text-sm">{errors.operationHours.open.message}</span>
+                          <span className="text-sm">
+                            {errors.operationHours.open.message}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -560,7 +587,7 @@ const CreatePost = () => {
                         Closing Time <span className="text-red-500">*</span>
                       </label>
                       <input
-                        {...register("operationHours.close", { 
+                        {...register("operationHours.close", {
                           required: "Closing time is required",
                           validate: (value) => {
                             const openTime = watch("operationHours.open");
@@ -568,7 +595,7 @@ const CreatePost = () => {
                               return "Closing time must be after opening time";
                             }
                             return true;
-                          }
+                          },
                         })}
                         type="time"
                         className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
@@ -576,7 +603,9 @@ const CreatePost = () => {
                       {errors.operationHours?.close && (
                         <div className="flex items-center mt-2 text-red-600">
                           <AlertCircle className="w-4 h-4 mr-2" />
-                          <span className="text-sm">{errors.operationHours.close.message}</span>
+                          <span className="text-sm">
+                            {errors.operationHours.close.message}
+                          </span>
                         </div>
                       )}
                     </div>
@@ -597,22 +626,18 @@ const CreatePost = () => {
                 <div className="p-6 space-y-6">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Regular Price ($/month){" "}
+                      Regular Price
                       <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                      <FaMoneyBillWave className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                       <input
-                        {...register("price", { 
+                        {...register("price", {
                           required: "Price is required",
-                          min: { 
-                            value: 1, 
-                            message: "Price must be greater than 0" 
+                          min: {
+                            value: 1,
+                            message: "Price must be greater than 0",
                           },
-                          max: {
-                            value: 1000000,
-                            message: "Price must be less than 1,000,000"
-                          }
                         })}
                         type="number"
                         placeholder="0.00"
@@ -655,16 +680,19 @@ const CreatePost = () => {
                     {watchOffer && (
                       <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                          Discount Price ($/month) <span className="text-red-500">*</span>
+                          Discount Price
+                          <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
-                          <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+                          <FaMoneyBillWave className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
                           <input
                             {...register("discountPrice", {
-                              required: "Discount price is required when offer is checked",
+                              required:
+                                "Discount price is required when offer is checked",
                               validate: (value) => {
                                 const price = watch("price");
-                                if (!price) return "Please enter regular price first";
+                                if (!price)
+                                  return "Please enter regular price first";
                                 if (parseFloat(value) >= parseFloat(price)) {
                                   return "Discount price must be less than regular price";
                                 }
@@ -672,7 +700,7 @@ const CreatePost = () => {
                                   return "Discount price must be greater than 0";
                                 }
                                 return true;
-                              }
+                              },
                             })}
                             type="number"
                             placeholder="0.00"
@@ -682,7 +710,9 @@ const CreatePost = () => {
                         {errors.discountPrice && (
                           <div className="flex items-center mt-2 text-red-600">
                             <AlertCircle className="w-4 h-4 mr-2" />
-                            <span className="text-sm">{errors.discountPrice.message}</span>
+                            <span className="text-sm">
+                              {errors.discountPrice.message}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -704,22 +734,49 @@ const CreatePost = () => {
                   </div>
                 </div>
                 <div className="p-6">
-                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors">
+                  <div
+                    className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-slate-400 transition-colors"
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.add(
+                        "border-slate-400",
+                        "bg-slate-50"
+                      );
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        "border-slate-400",
+                        "bg-slate-50"
+                      );
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      e.currentTarget.classList.remove(
+                        "border-slate-400",
+                        "bg-slate-50"
+                      );
+                      if (e.dataTransfer.files.length > 0) {
+                        setImageFile(e.dataTransfer.files);
+                      }
+                    }}
+                  >
                     <div className="w-12 h-12 mx-auto bg-slate-100 rounded-lg flex items-center justify-center mb-4">
                       <Plus className="w-6 h-6 text-slate-600" />
                     </div>
                     <p className="text-sm text-slate-600 mb-4">
-                      <span className="font-medium">Click to upload</span> or drag
-                      and drop
+                      <span className="font-medium">Click to upload</span> or
+                      drag and drop
                     </p>
                     <p className="text-xs text-slate-500 mb-4">
-                      PNG, JPG, GIF up to 10MB. First image will be the cover.
+                      PNG, JPG, GIF, MP4 up to 10MB. First image will be the
+                      cover.
                     </p>
 
                     <input
                       type="file"
                       multiple
-                      accept="image/*"
+                      accept="image/*,video/*"
                       onChange={(e) => setImageFile(e.target.files)}
                       className="hidden"
                       id="file-upload"
@@ -753,42 +810,83 @@ const CreatePost = () => {
                     )}
                   </div>
 
-                  {/* Uploaded Images */}
+                  {/* Uploaded Media */}
                   {uploadedImages.length > 0 && (
                     <div className="mt-6 space-y-3">
                       <h3 className="text-sm font-medium text-slate-900">
-                        Uploaded Images
+                        Uploaded Media (Drag to reorder)
                       </h3>
-                      {uploadedImages.map((imgSrc, index) => (
-                        <div
-                          key={imgSrc.filename}
-                          className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg"
-                        >
-                          <img
-                            src={imgSrc.path}
-                            alt="Uploaded"
-                            className="w-12 h-12 object-cover rounded-lg"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">
-                              {index === 0 && (
-                                <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
-                              )}
-                              {imgSrc.filename}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {index === 0 ? "Cover image" : `Image ${index + 1}`}
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteImage(index)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      <div className="space-y-3">
+                        {uploadedImages.map((media, index) => (
+                          <div
+                            key={media.filename}
+                            className={`flex items-center space-x-3 p-3 border border-slate-200 rounded-lg ${
+                              index === 0 ? "border-amber-300 bg-amber-50" : ""
+                            }`}
+                            draggable
+                            onDragStart={(e) =>
+                              e.dataTransfer.setData("text/plain", index)
+                            }
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.classList.add("bg-slate-100");
+                            }}
+                            onDragLeave={(e) => {
+                              e.currentTarget.classList.remove("bg-slate-100");
+                            }}
+                            onDrop={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.classList.remove("bg-slate-100");
+                              const draggedIndex = parseInt(
+                                e.dataTransfer.getData("text/plain")
+                              );
+                              const newImages = [...uploadedImages];
+                              const [removed] = newImages.splice(
+                                draggedIndex,
+                                1
+                              );
+                              newImages.splice(index, 0, removed);
+                              setUploadedImages(newImages);
+                            }}
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
+                            {media.mimetype.startsWith("image/") ? (
+                              <img
+                                src={media.path}
+                                alt="Uploaded"
+                                className="w-12 h-12 object-cover rounded-lg"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
+                                <span className="text-xs text-slate-500">
+                                  Video
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">
+                                {index === 0 && (
+                                  <span className="inline-block w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
+                                )}
+                                {media.filename}
+                              </p>
+                              <p className="text-xs text-slate-500">
+                                {index === 0
+                                  ? "Cover media"
+                                  : `Media ${index + 1}`}
+                                {media.mimetype.startsWith("video/") &&
+                                  " (Video)"}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteImage(index)}
+                              className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {uploadError.isError && (
@@ -805,7 +903,9 @@ const CreatePost = () => {
                 <div className="p-6">
                   <button
                     type="submit"
-                    disabled={uploadedImages.length < 1 || loading || formSubmitLoading}
+                    disabled={
+                      uploadedImages.length < 1 || loading || formSubmitLoading
+                    }
                     className="w-full flex items-center justify-center px-6 py-4 bg-slate-900 text-white text-lg font-semibold rounded-lg hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
                   >
                     {formSubmitLoading ? (

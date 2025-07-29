@@ -28,11 +28,8 @@ const PostCard = ({ postInfo }) => {
     imgUrl,
   } = postInfo.post;
 
-
- 
-
   const navigate = useNavigate();
-  const currentUser = UserProfile.GetUserData()
+  const currentUser = UserProfile.GetUserData();
   const discountPercent = offer
     ? Math.round(((price - discountPrice) / price) * 100)
     : 0;
@@ -54,12 +51,26 @@ const PostCard = ({ postInfo }) => {
         onClick={() => navigate(`/listing/${_id}`)}
         className="relative h-48 sm:h-56 md:h-60 w-full overflow-hidden cursor-pointer"
       >
-        <img
-          src={imgUrl?.[0]?.path}
-          alt={title}
-          loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-        />
+        {imgUrl?.[0] &&
+        (imgUrl[0].type?.startsWith("video") ||
+          /\.(mp4|webm|mov)$/i.test(imgUrl[0].path)) ? (
+          <video
+            src={imgUrl[0].path}
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        ) : (
+          <img
+            src={imgUrl?.[0]?.path || "/placeholder-image.jpg"}
+            alt={title}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          />
+        )}
+
         <div className="absolute bottom-2 right-2 flex items-center bg-black/60 text-white text-xs px-2 py-1 rounded-full">
           <FaCamera className="mr-1" />
           {imgUrl.length}
@@ -80,7 +91,9 @@ const PostCard = ({ postInfo }) => {
             <h3 className="text-base sm:text-lg font-semibold text-gray-800 hover:text-brand-blue line-clamp-1 transition">
               {title}
             </h3>
-            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{description}</p>
+            <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+              {description}
+            </p>
           </div>
 
           {/* Address */}
@@ -100,7 +113,9 @@ const PostCard = ({ postInfo }) => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Capacity</p>
-                  <p className="text-sm font-medium text-gray-800">{capacity}</p>
+                  <p className="text-sm font-medium text-gray-800">
+                    {capacity}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
@@ -109,7 +124,9 @@ const PostCard = ({ postInfo }) => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Venue Type</p>
-                  <p className="text-sm font-medium text-gray-800 capitalize">{venuetype}</p>
+                  <p className="text-sm font-medium text-gray-800 capitalize">
+                    {venuetype}
+                  </p>
                 </div>
               </div>
             </div>
@@ -121,13 +138,15 @@ const PostCard = ({ postInfo }) => {
           <div>
             <div className="flex items-baseline">
               <p className="text-lg sm:text-xl font-bold text-brand-blue">
-                Rs{offer ? discountPrice.toLocaleString() : price.toLocaleString()}
+                Rs
+                {offer
+                  ? discountPrice.toLocaleString()
+                  : price.toLocaleString()}
               </p>
-              
             </div>
             {offer && (
               <p className="text-xs text-gray-400 line-through">
-                ${price.toLocaleString()}
+                Rs{price.toLocaleString()}
               </p>
             )}
           </div>
@@ -140,29 +159,30 @@ const PostCard = ({ postInfo }) => {
           )}
         </div>
 
-        {currentUser?._id == postInfo.post.userId &&
-        <div className="mt-5 flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/update_post/${_id}`);
-            }}
-            className="flex w-full sm:w-auto items-center justify-center bg-white border border-blue-600 text-brand-blue hover:bg-blue-50 font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            <FaEdit className="mr-2" />
-            Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              postInfo.handlePostDelete(_id,type);
-            }}
-            className="flex w-full sm:w-auto items-center justify-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            <FaTrash className="mr-2" />
-            Delete
-          </button>
-        </div>}
+        {currentUser?._id == postInfo.post.userId && (
+          <div className="mt-5 flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/update_post/${_id}`);
+              }}
+              className="flex w-full sm:w-auto items-center justify-center bg-white border border-blue-600 text-brand-blue hover:bg-blue-50 font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              <FaEdit className="mr-2" />
+              Edit
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                postInfo.handlePostDelete(_id, type);
+              }}
+              className="flex w-full sm:w-auto items-center justify-center bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              <FaTrash className="mr-2" />
+              Delete
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

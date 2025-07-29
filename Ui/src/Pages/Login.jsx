@@ -2,7 +2,6 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import SignIn from "../Components/Signin";
 import { Bounce, ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Footer from "../Components/Footer";
 import { useNavigate } from "react-router-dom";
 import Signup from "../Components/Signup";
 import UserProfile from "../../UserProfile";
@@ -58,9 +57,7 @@ const Login = () => {
           </div>
         </section>
       )}
-      <>
-        <Footer />
-      </>
+     
     </>
   );
 };

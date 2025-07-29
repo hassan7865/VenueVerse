@@ -4,7 +4,6 @@ import { BsFillPlusSquareFill } from "react-icons/bs";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import Loading from "../Components/Loading.jsx";
-import Footer from "../Components/Footer.jsx";
 import UserProfile from "../../UserProfile.js";
 import PostCard from "../components/PostCard.jsx";
 import api from "../lib/Url.js";
@@ -52,64 +51,65 @@ const MyListing = () => {
     loadShopItems();
   }, []);
 
-const handlePostDelete = async (venueId, type) => {
-  const isConfirmed = await showConfirmationToast({
-    title: 'Delete Confirmation',
-    message: `Are you sure you want to delete this ${type}? This action cannot be undone.`,
-    variant: 'danger',
-    confirmText: 'Yes, Delete',
-    cancelText: 'Cancel',
-    onConfirm: () => console.log(`Confirmed deletion of ${type}`),
-    onCancel: () => console.log(`Cancelled deletion of ${type}`)
-  });
+  const handlePostDelete = async (venueId, type) => {
+    const isConfirmed = await showConfirmationToast({
+      title: "Delete Confirmation",
+      message: `Are you sure you want to delete this ${type}? This action cannot be undone.`,
+      variant: "danger",
+      confirmText: "Yes, Delete",
+      cancelText: "Cancel",
+      onConfirm: () => console.log(`Confirmed deletion of ${type}`),
+      onCancel: () => console.log(`Cancelled deletion of ${type}`),
+    });
 
-  if (!isConfirmed) return;
+    if (!isConfirmed) return;
 
-  setLoading(true);
-  const toastId = toast.loading(`Deleting ${type}...`);
+    setLoading(true);
+    const toastId = toast.loading(`Deleting ${type}...`);
 
-  try {
-    await api.delete(`/post/${venueId}`);
-    toast.success(`${type} deleted successfully`);
-    loadVenues();
-  } catch (error) {
-    console.error(`Error deleting ${type}:`, error);
-    const message =
-      error.response?.data?.message || `Failed to delete ${type}`;
-    toast.error(message, { id: toastId });
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      await api.delete(`/post/${venueId}`);
+      toast.success(`${type} deleted successfully`);
+      loadVenues();
+    } catch (error) {
+      console.error(`Error deleting ${type}:`, error);
+      const message =
+        error.response?.data?.message || `Failed to delete ${type}`;
+      toast.error(message, { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleShopItemDelete = async (itemId) => {
-  const isConfirmed = await showConfirmationToast({
-    title: 'Delete Item',
-    message: 'Are you sure you want to delete this item? This action cannot be undone.',
-    variant: 'danger',
-    confirmText: 'Yes, Delete',
-    cancelText: 'Cancel',
-    onConfirm: () => console.log('Confirmed item deletion'),
-    onCancel: () => console.log('Cancelled item deletion')
-  });
+  const handleShopItemDelete = async (itemId) => {
+    const isConfirmed = await showConfirmationToast({
+      title: "Delete Item",
+      message:
+        "Are you sure you want to delete this item? This action cannot be undone.",
+      variant: "danger",
+      confirmText: "Yes, Delete",
+      cancelText: "Cancel",
+      onConfirm: () => console.log("Confirmed item deletion"),
+      onCancel: () => console.log("Cancelled item deletion"),
+    });
 
-  if (!isConfirmed) return;
+    if (!isConfirmed) return;
 
-  setLoading(true);
-  const toastId = toast.loading("Deleting item...");
+    setLoading(true);
+    const toastId = toast.loading("Deleting item...");
 
-  try {
-    await api.delete(`/product/${itemId}`);
-    toast.success("Item deleted successfully");
-    loadShopItems();
-  } catch (error) {
-    console.error("Delete error:", error);
-    const message = error.response?.data?.message || "Failed to delete item";
-    toast.error(message, { id: toastId });
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      await api.delete(`/product/${itemId}`);
+      toast.success("Item deleted successfully");
+      loadShopItems();
+    } catch (error) {
+      console.error("Delete error:", error);
+      const message = error.response?.data?.message || "Failed to delete item";
+      toast.error(message, { id: toastId });
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -220,7 +220,10 @@ const handleShopItemDelete = async (itemId) => {
                     {shopItems.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {shopItems?.map((item) => (
-                         <ProductCard product={item} handleShopItemDelete={handleShopItemDelete} />
+                          <ProductCard
+                            product={item}
+                            handleShopItemDelete={handleShopItemDelete}
+                          />
                         ))}
                       </div>
                     ) : (
@@ -243,8 +246,6 @@ const handleShopItemDelete = async (itemId) => {
           </div>
         </div>
       </div>
-
-      <Footer />
     </div>
   );
 };

@@ -26,6 +26,7 @@ import ShopSearch from "./Pages/SearchShopItem";
 import UserOrdersPage from "./Pages/Order";
 import SuccessPage from "./Pages/OrderSuccessfull";
 import Dashboard from "./Pages/Dashboard";
+import Footer from "./Components/Footer";
 
 function App() {
   const stripePromise = loadStripe(
@@ -59,6 +60,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard/>}/>
         </Route>
       </Routes>
+      <Footer/>
 
       <Toaster position="top-right" reverseOrder={false} />
       <Elements stripe={stripePromise}>
