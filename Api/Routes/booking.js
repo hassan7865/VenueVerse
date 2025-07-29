@@ -1,14 +1,27 @@
 const express = require("express");
 const Booking = require("../Models/Booking.model");
 const verifyToken = require("../Helper/verifyToken");
-const throwError = require("../Helper/error"); 
+const throwError = require("../Helper/error");
 const post = require("../Models/Post.model");
 const to12Hour = require("../Helper/12Hr");
+const generateInvoice = require("../Constants/generateInvoice");
+const sendEmail = require("../Helper/email");
+const { bookingSuccessTemplate } = require("../Constants/emailbody");
+const User = require("../Models/User.model");
 const router = express.Router();
 
 router.post("/create", verifyToken, async (req, res, next) => {
   try {
-    const { type, venueId, serviceId, startTime, endTime, notes,userId } = req.body;
+    const {
+      type,
+      venueId,
+      serviceId,
+      startTime,
+      endTime,
+      notes,
+      userId,
+      price,
+    } = req.body;
 
     if (!type || !["venue", "service"].includes(type)) {
       return next(throwError(400, "Invalid or missing booking type."));
@@ -19,7 +32,9 @@ router.post("/create", verifyToken, async (req, res, next) => {
     }
 
     if (type === "service" && !serviceId) {
-      return next(throwError(400, "serviceId is required for service bookings."));
+      return next(
+        throwError(400, "serviceId is required for service bookings.")
+      );
     }
 
     const postId = type === "venue" ? venueId : serviceId;
@@ -39,8 +54,6 @@ router.post("/create", verifyToken, async (req, res, next) => {
       return h * 60 + m;
     };
 
-    
-
     const start = new Date(startTime);
     const end = new Date(endTime);
 
@@ -48,17 +61,21 @@ router.post("/create", verifyToken, async (req, res, next) => {
       return next(throwError(400, "End time must be after start time."));
     }
 
-    // Extract UTC hours and minutes for booking
-  const startBookingMinutes = start.getHours() * 60 + start.getMinutes();
-const endBookingMinutes = end.getHours() * 60 + end.getMinutes();
-    // Convert operation hours to minutes
+    const startBookingMinutes = start.getHours() * 60 + start.getMinutes();
+    const endBookingMinutes = end.getHours() * 60 + end.getMinutes();
+
     const openMinutes = toMinutes(operationHours.open);
     const closeMinutes = toMinutes(operationHours.close);
 
-    // Validate booking is within operational hours
     const isValidTime =
-      endBookingMinutes <= closeMinutes &&
-      startBookingMinutes >= openMinutes;
+      endBookingMinutes <= closeMinutes && startBookingMinutes >= openMinutes;
+
+    const to12Hour = (timeStr) => {
+      const [hour, minute] = timeStr.split(":").map(Number);
+      const suffix = hour >= 12 ? "PM" : "AM";
+      const h = ((hour + 11) % 12) + 1;
+      return `${h}:${minute.toString().padStart(2, "0")} ${suffix}`;
+    };
 
     if (!isValidTime) {
       return next(
@@ -71,7 +88,6 @@ const endBookingMinutes = end.getHours() * 60 + end.getMinutes();
       );
     }
 
-    // Check for overlapping bookings
     const filter = {
       type,
       ...(type === "venue" ? { venueId } : { serviceId }),
@@ -81,10 +97,11 @@ const endBookingMinutes = end.getHours() * 60 + end.getMinutes();
 
     const conflict = await Booking.findOne(filter);
     if (conflict) {
-      return next(throwError(409, `This ${type} is already booked for the selected time.`));
+      return next(
+        throwError(409, `This ${type} is already booked for the selected time.`)
+      );
     }
 
-    // Save booking
     const booking = new Booking({
       userId,
       type,
@@ -92,23 +109,58 @@ const endBookingMinutes = end.getHours() * 60 + end.getMinutes();
       serviceId: type === "service" ? serviceId : undefined,
       startTime,
       endTime,
+      price,
       notes,
     });
 
     const saved = await booking.save();
-    res.status(201).json(saved);
+
+    // Fetch user info for invoice
+    const userDoc = await User.findById(userId);
+    if (!userDoc) return next(throwError(404, "User not found."));
+
+    // Get venue/service name
+    const venueName = postDoc.title || postDoc.name || "Unknown";
+
+    // Generate PDF invoice
+    const pdfBuffer = await generateInvoice({
+      bookingId: saved._id.toString(),
+      customerName: userDoc.username || "N/A",
+      customerEmail: userDoc.email || "N/A",
+      customerPhone: userDoc.phone || "N/A",
+      venueName,
+      startTime: saved.startTime,
+      endTime: saved.endTime,
+      totalPrice: saved.price,
+    });
+
+    await sendEmail({
+      to: userDoc.email,
+      subject: "Venue Booking Confirmation",
+      html: bookingSuccessTemplate(userDoc.username, booking._id),
+      attachments: [
+        {
+          filename: `invoice-${booking._id}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
+    res.status(201).json({ booking: saved });
   } catch (err) {
     next(err);
   }
 });
-
 
 router.get("/calendar", async (req, res, next) => {
   try {
     const { type, id } = req.query;
 
     if (!type || !["venue", "service"].includes(type)) {
-      return next(throwError(400, "Invalid or missing 'type' query parameter."));
+      return next(
+        throwError(400, "Invalid or missing 'type' query parameter.")
+      );
     }
 
     if (!id) {
@@ -124,7 +176,9 @@ router.get("/calendar", async (req, res, next) => {
     const { operationHours, operationDays } = postDoc;
 
     if (!operationHours || !operationHours.open || !operationHours.close) {
-      return next(throwError(500, `Operational hours not configured for this ${type}`));
+      return next(
+        throwError(500, `Operational hours not configured for this ${type}`)
+      );
     }
 
     const filter = {
@@ -136,7 +190,7 @@ router.get("/calendar", async (req, res, next) => {
       .select("startTime endTime notes")
       .sort("startTime");
 
-    const events = bookingsRaw.map(b => ({
+    const events = bookingsRaw.map((b) => ({
       id: b._id.toString(),
       title: b.notes || "Booked",
       start: b.startTime.toISOString(),
@@ -144,8 +198,8 @@ router.get("/calendar", async (req, res, next) => {
     }));
 
     res.status(200).json({
-      operationDays,      
-      operationHours,     
+      operationDays,
+      operationHours,
       events,
     });
   } catch (err) {
@@ -170,7 +224,6 @@ router.get("/by-user/:userId", async (req, res, next) => {
 
       const post = obj.venueId || obj.serviceId;
 
-
       delete obj.venueId;
       delete obj.serviceId;
 
@@ -193,18 +246,20 @@ router.get("/by-date", async (req, res, next) => {
 
     // Validate type
     if (!["venue", "service"].includes(type)) {
-      return next(throwError(400, "Invalid type. Must be 'venue' or 'service'"));
+      return next(
+        throwError(400, "Invalid type. Must be 'venue' or 'service'")
+      );
     }
 
     // Parse date in YYYY-MM-DD (local)
     const [year, month, day] = date.split("-").map(Number);
-    const dayStart = new Date(year, month - 1, day, 0, 0, 0, 0);       // Local 00:00
-    const dayEnd = new Date(year, month - 1, day, 23, 59, 59, 999);   // Local 23:59
+    const dayStart = new Date(year, month - 1, day, 0, 0, 0, 0); // Local 00:00
+    const dayEnd = new Date(year, month - 1, day, 23, 59, 59, 999); // Local 23:59
 
     // Dynamic filter key
     const filter = {
       [type === "venue" ? "venueId" : "serviceId"]: postId,
-      startTime: { $gte: dayStart, $lte: dayEnd }
+      startTime: { $gte: dayStart, $lte: dayEnd },
     };
 
     const bookings = await Booking.find(filter)
@@ -224,8 +279,6 @@ router.get("/by-date", async (req, res, next) => {
     next(err);
   }
 });
-
-
 
 router.put("/:id", async (req, res, next) => {
   try {
@@ -258,7 +311,5 @@ router.delete("/:id", async (req, res, next) => {
     next(err);
   }
 });
-
-
 
 module.exports = router;

@@ -22,7 +22,7 @@ route.get("/:id", async (req, res, next) => {
   try {
     const getPost = await post.findById(req.params.id);
     if (!getPost) {
-      return throwError(400,"Post not found" );
+      return next(throwError(400,"Post not found" ));
     }
 
     const user = await User.findById(getPost.userId).select(

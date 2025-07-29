@@ -47,7 +47,7 @@ route.get("/:id", async (req, res, next) => {
   try {
     const getProduct = await Product.findById(req.params.id);
     if (!getProduct) {
-      return res.status(404).json({ message: "Product not found" });
+      return next(throwError(404,"Product not found" ));
     }
 
     const user = await User.findById(getProduct.userId).select(

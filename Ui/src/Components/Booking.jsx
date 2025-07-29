@@ -4,36 +4,79 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import toast from "react-hot-toast";
-import { TrashIcon, X } from "lucide-react";
+import { TrashIcon, X, Loader2 } from "lucide-react";
 import { BsPencilSquare } from "react-icons/bs";
+import { useForm, Controller } from "react-hook-form";
 import api from "../lib/Url";
+
 
 const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operationDays }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [searchInput, setSearchInput] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [currentBooking, setCurrentBooking] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingEvents, setIsFetchingEvents] = useState(false);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(null); // Track which booking is being deleted
 
-  // Form state
-  const [formData, setFormData] = useState({
-    startTime: new Date(),
-    endTime: new Date(new Date().setHours(new Date().getHours() + 1)),
-    notes: "",
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      user: null,
+      startTime: new Date(),
+      endTime: new Date(new Date().setHours(new Date().getHours() + 1)),
+      notes: "",
+      price: 0,
+    },
   });
+
+  // Watch user value to handle Select component
+  const selectedUser = watch("user");
 
   // Check if selected day is operational
   const isOperationalDay = () => {
     const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
-    console.log(dayName,operationDays)
     return operationDays?.includes(dayName);
+  };
+
+  // Helper function to combine date and time
+  const combineDateAndTime = (date, time) => {
+    const combined = new Date(date);
+    combined.setHours(time.getHours());
+    combined.setMinutes(time.getMinutes());
+    combined.setSeconds(0);
+    combined.setMilliseconds(0);
+    return combined;
+  };
+
+  // Helper function to update time fields when date changes
+  const updateTimeFieldsForDate = (newDate) => {
+    const currentStartTime = watch("startTime");
+    const currentEndTime = watch("endTime");
+    
+    if (currentStartTime) {
+      const newStartTime = combineDateAndTime(newDate, currentStartTime);
+      setValue("startTime", newStartTime);
+    }
+    
+    if (currentEndTime) {
+      const newEndTime = combineDateAndTime(newDate, currentEndTime);
+      setValue("endTime", newEndTime);
+    }
   };
 
   // Fetch events for selected date
   const fetchEvents = async () => {
     try {
+      setIsFetchingEvents(true);
       const dateStr = selectedDate.toLocaleDateString("en-CA");
       const res = await api.get(
         `/booking/by-date?date=${dateStr}&postId=${id}&type=${type}`
@@ -42,12 +85,16 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
     } catch (error) {
       toast.error("Failed to fetch events");
       console.error(error);
+    } finally {
+      setIsFetchingEvents(false);
     }
   };
 
   // Search users by email
   const searchUsers = async (inputValue) => {
     try {
+      if (inputValue.length < 3) return;
+      setIsSearchingUsers(true);
       const res = await api.get(`/user/search?email=${inputValue}`);
       setUsers(
         res.data.map((user) => ({
@@ -58,77 +105,71 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
     } catch (error) {
       toast.error("Failed to search users");
       console.error(error);
+    } finally {
+      setIsSearchingUsers(false);
     }
   };
 
   // Handle date change
   const handleDateChange = (date) => {
     setSelectedDate(date);
-  };
-
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Handle time changes
-  const handleTimeChange = (date, field) => {
-    setFormData((prev) => ({ ...prev, [field]: date }));
-  };
-
-  // Handle user selection
-  const handleUserChange = (selectedOption) => {
-    console.log(selectedOption)
-    setSelectedUser(selectedOption);
+    // Update the time fields to reflect the new date
+    updateTimeFieldsForDate(date);
   };
 
   // Handle form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!selectedUser) {
-      toast.error("Please select a user");
-      return;
-    }
-
+  const onSubmit = async (data) => {
     try {
+      setIsLoading(true);
+      // Ensure the start and end times have the correct date
+      const startTime = combineDateAndTime(selectedDate, data.startTime);
+      const endTime = combineDateAndTime(selectedDate, data.endTime);
+      
       const bookingData = {
-        userId: selectedUser.value,
+        userId: data.user.value,
         type,
-        venueId: type == "venue" ? id : undefined,
-        serviceId: type == 'service' ? id : undefined,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        notes: formData.notes,
+        venueId: type === "venue" ? id : undefined,
+        serviceId: type === 'service' ? id : undefined,
+        startTime,
+        endTime,
+        notes: data.notes,
+        price: data.price,
       };
 
       if (isEditing && currentBooking) {
         await api.put(`/booking/${currentBooking._id}`, bookingData);
         toast.success("Booking updated successfully");
       } else {
-        // Create new booking
         await api.post("/booking/create", bookingData);
         toast.success("Booking created successfully");
       }
 
-      // Reset form and refresh events
       resetForm();
       fetchEvents();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to save booking");
       console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Reset form to initial state
   const resetForm = () => {
-    setFormData({
-      startTime: new Date(),
-      endTime: new Date(new Date().setHours(new Date().getHours() + 1)),
+    const now = new Date();
+    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    
+    // Set times to current selected date
+    const startTime = combineDateAndTime(selectedDate, now);
+    const endTime = combineDateAndTime(selectedDate, oneHourLater);
+    
+    reset({
+      user: null,
+      startTime,
+      endTime,
       notes: "",
+      price: 0,
     });
-    setSelectedUser(null);
     setIsEditing(false);
     setCurrentBooking(null);
   };
@@ -137,26 +178,36 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
   const handleEdit = (booking) => {
     setCurrentBooking(booking);
     setIsEditing(true);
-    setSelectedUser({
+    
+    const bookingDate = new Date(booking.startTime);
+    const startTime = new Date(booking.startTime);
+    const endTime = new Date(booking.endTime);
+    
+    // Set the calendar date to match the booking date
+    setSelectedDate(bookingDate);
+    
+    setValue("user", {
       value: booking.user._id,
       label: `${booking.user.username} (${booking.user.email})`,
     });
-    setFormData({
-      startTime: new Date(booking.startTime),
-      endTime: new Date(booking.endTime),
-      notes: booking.notes,
-    });
+    setValue("startTime", startTime);
+    setValue("endTime", endTime);
+    setValue("notes", booking.notes);
+    setValue("price", booking.price || 0);
   };
 
   // Delete booking
   const handleDelete = async (bookingId) => {
     try {
+      setIsDeleting(bookingId);
       await api.delete(`/booking/${bookingId}`);
       toast.success("Booking deleted successfully");
       fetchEvents();
     } catch (error) {
       toast.error("Failed to delete booking");
       console.error(error);
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -169,19 +220,12 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
   useEffect(() => {
     if (isOpen) {
       fetchEvents();
+      // Reset form with current selected date when dialog opens
+      if (!isEditing) {
+        resetForm();
+      }
     }
   }, [selectedDate, isOpen]);
-
-  // Debounce user search
-  useEffect(() => {
-    if (searchInput.length > 2) {
-      const timer = setTimeout(() => {
-        searchUsers(searchInput);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [searchInput]);
 
   const parseTime = (timeStr) => {
     if (timeStr) {
@@ -275,11 +319,15 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                       </h4>
 
                       <div className="max-h-64 overflow-y-auto pr-2">
-                        {events.length > 0 ? (
+                        {isFetchingEvents ? (
+                          <div className="flex items-center justify-center h-32">
+                            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+                          </div>
+                        ) : events.length > 0 ? (
                           <div className="space-y-2">
                             {events.map((event) => (
                               <div
-                                key={event.id}
+                                key={event._id}
                                 className="bg-gray-50 rounded-lg p-3 border border-gray-200 hover:border-gray-300 transition-colors"
                               >
                                 <div className="flex justify-between items-start gap-3">
@@ -302,6 +350,7 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                                       onClick={() => handleEdit(event)}
                                       className="text-brand-blue hover:text-brand-blue p-1 rounded hover:bg-blue-50"
                                       title="Edit booking"
+                                      disabled={isDeleting === event._id}
                                     >
                                       <BsPencilSquare className="h-4 w-4" />
                                     </button>
@@ -309,8 +358,13 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                                       onClick={() => handleDelete(event._id)}
                                       className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
                                       title="Delete booking"
+                                      disabled={isDeleting === event._id}
                                     >
-                                      <TrashIcon className="h-4 w-4" />
+                                      {isDeleting === event._id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <TrashIcon className="h-4 w-4" />
+                                      )}
                                     </button>
                                   </div>
                                 </div>
@@ -331,22 +385,39 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                   {/* Right Column - Booking Form or Not Operational Message */}
                   <div className="w-full lg:w-1/2 p-4 sm:p-6">
                     {isOperationalDay() ? (
-                      <form onSubmit={handleSubmit} className="space-y-4">
+                      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         {/* User Selection */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Select User
+                            <span className="text-red-500">*</span>
                           </label>
-                          <Select
-                            options={users}
-                            value={selectedUser}
-                            onChange={handleUserChange}
-                            onInputChange={setSearchInput}
-                            placeholder="Search by email..."
-                            isClearable
-                            required
-                            className="text-sm"
+                          <Controller
+                            name="user"
+                            control={control}
+                            rules={{ required: "User selection is required" }}
+                            render={({ field }) => (
+                              <Select
+                                {...field}
+                                options={users}
+                                onInputChange={(inputValue) => {
+                                  if (inputValue.length > 2) {
+                                    searchUsers(inputValue);
+                                  }
+                                }}
+                                placeholder={isSearchingUsers ? "Searching users..." : "Search by email..."}
+                                isClearable
+                                isLoading={isSearchingUsers}
+                                loadingMessage={() => "Searching users..."}
+                                className="text-sm text-black"
+                              />
+                            )}
                           />
+                          {errors.user && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {errors.user.message}
+                            </p>
+                          )}
                         </div>
 
                         {/* Time Selection */}
@@ -354,43 +425,114 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Start Time
+                              <span className="text-red-500">*</span>
                             </label>
-                            <DatePicker
-                              selected={formData.startTime}
-                              onChange={(date) =>
-                                handleTimeChange(date, "startTime")
-                              }
-                              showTimeSelect
-                              showTimeSelectOnly
-                              timeIntervals={15}
-                              timeCaption="Time"
-                              minTime={minTime}
-                              maxTime={maxTime}
-                              dateFormat="h:mm aa"
-                              className="border rounded-md p-2 w-full text-sm"
-                              required
+                            <Controller
+                              name="startTime"
+                              control={control}
+                              rules={{ required: "Start time is required" }}
+                              render={({ field }) => (
+                                <DatePicker
+                                  selected={field.value}
+                                  onChange={(time) => {
+                                    // Combine selected date with the time
+                                    const combinedDateTime = combineDateAndTime(selectedDate, time);
+                                    field.onChange(combinedDateTime);
+                                  }}
+                                  showTimeSelect
+                                  showTimeSelectOnly
+                                  timeIntervals={15}
+                                  timeCaption="Time"
+                                  minTime={minTime}
+                                  maxTime={maxTime}
+                                  dateFormat="h:mm aa"
+                                  className="border rounded-md p-2 w-full text-sm"
+                                />
+                              )}
                             />
+                            {errors.startTime && (
+                              <p className="mt-1 text-sm text-red-600">
+                                {errors.startTime.message}
+                              </p>
+                            )}
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               End Time
+                              <span className="text-red-500">*</span>
                             </label>
-                            <DatePicker
-                              selected={formData.endTime}
-                              onChange={(date) =>
-                                handleTimeChange(date, "endTime")
-                              }
-                              showTimeSelect
-                              showTimeSelectOnly
-                              timeIntervals={15}
-                              timeCaption="Time"
-                              dateFormat="h:mm aa"
-                              minTime={minTime}
-                              maxTime={maxTime}
-                              className="border rounded-md p-2 w-full text-sm"
-                              required
+                            <Controller
+                              name="endTime"
+                              control={control}
+                              rules={{ 
+                                required: "End time is required",
+                                validate: value => {
+                                  const startTime = watch("startTime");
+                                  return (
+                                    value > startTime || 
+                                    "End time must be after start time"
+                                  );
+                                }
+                              }}
+                              render={({ field }) => (
+                                <DatePicker
+                                  selected={field.value}
+                                  onChange={(time) => {
+                                    // Combine selected date with the time
+                                    const combinedDateTime = combineDateAndTime(selectedDate, time);
+                                    field.onChange(combinedDateTime);
+                                  }}
+                                  showTimeSelect
+                                  showTimeSelectOnly
+                                  timeIntervals={15}
+                                  timeCaption="Time"
+                                  dateFormat="h:mm aa"
+                                  minTime={minTime}
+                                  maxTime={maxTime}
+                                  className="border rounded-md p-2 w-full text-sm"
+                                />
+                              )}
                             />
+                            {errors.endTime && (
+                              <p className="mt-1 text-sm text-red-600">
+                                {errors.endTime.message}
+                              </p>
+                            )}
                           </div>
+                        </div>
+
+                        {/* Price */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Price
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <Controller
+                            name="price"
+                            control={control}
+                            rules={{ 
+                              required: "Price is required",
+                              min: {
+                                value: 0,
+                                message: "Price must be a positive number"
+                              }
+                            }}
+                            render={({ field }) => (
+                              <input
+                                {...field}
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="border rounded-md p-2 w-full bg-white border-gray-300 text-black text-sm resize-none"
+                                placeholder="Enter the Price of Booking"
+                              />
+                            )}
+                          />
+                          {errors.price && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {errors.price.message}
+                            </p>
+                          )}
                         </div>
 
                         {/* Notes */}
@@ -398,13 +540,17 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                           <label className="block text-sm font-medium text-gray-700 mb-1">
                             Notes
                           </label>
-                          <textarea
+                          <Controller
                             name="notes"
-                            value={formData.notes}
-                            onChange={handleInputChange}
-                            rows={3}
-                            className="border rounded-md p-2 w-full bg-white border-gray-300 text-black text-sm resize-none"
-                            placeholder="Add any additional notes..."
+                            control={control}
+                            render={({ field }) => (
+                              <textarea
+                                {...field}
+                                rows={3}
+                                className="border rounded-md p-2 w-full bg-white border-gray-300 text-black text-sm resize-none"
+                                placeholder="Add any additional notes..."
+                              />
+                            )}
                           />
                         </div>
 
@@ -417,14 +563,21 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                               resetForm();
                             }}
                             className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                            disabled={isLoading}
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
-                            className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-blue hover:bg-brand-blue focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                            className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-brand-blue hover:bg-brand-blue focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors flex items-center justify-center min-w-32"
+                            disabled={isLoading}
                           >
-                            {isEditing ? "Update Booking" : "Create Booking"}
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                {isEditing ? "Updating..." : "Creating..."}
+                              </>
+                            ) : isEditing ? "Update Booking" : "Create Booking"}
                           </button>
                         </div>
                       </form>

@@ -7,7 +7,7 @@ import { HiOutlineMenuAlt3 } from "react-icons/hi";
 import UserProfile from "../../UserProfile";
 import ProfileOption from "./ProfileOption";
 import MobileMenu from "./ModileMenu";
-import { BookIcon } from "lucide-react";
+import { ShoppingBagIcon } from "lucide-react";
 import { useContext } from "react";
 import { CartContext } from "../context/cart";
 import { SidebarContext } from "../context/sidebar";
@@ -22,6 +22,7 @@ const Header = () => {
   useEffect(() => {
     const user = UserProfile.GetUserData();
     setCurrentUser(user);
+    console.log(location.pathname);
   }, [location.pathname]);
 
   return (
@@ -54,7 +55,7 @@ const Header = () => {
                     icon: FiPlusCircle,
                     label: "List Your Space",
                   },
-                  { to: "/bookings", icon: BookIcon, label: "Booking" },
+                  { to: "/shop", icon: ShoppingBagIcon, label: "Shop" },
                 ].map(({ to, icon: Icon, label }) => (
                   <Link
                     key={to}
@@ -80,6 +81,7 @@ const Header = () => {
                   {itemAmount}
                 </div>
               </div>
+
               {/* User Authentication */}
               <div className="flex items-center">
                 {currentUser ? (

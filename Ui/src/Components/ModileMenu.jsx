@@ -5,12 +5,17 @@ import {
   FaSignInAlt,
   FaSignOutAlt,
   FaTimes,
+  FaBoxOpen,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import UserProfile from "../../UserProfile";
 import api from "../lib/Url";
 import toast from "react-hot-toast";
 import { IoIosBookmarks } from "react-icons/io";
+import { IoTicket } from "react-icons/io5";
+import { BsBag, BsSearch } from "react-icons/bs";
+import { MdInventory2 } from "react-icons/md";
+import { FiPlusCircle } from "react-icons/fi";
 
 const MobileMenu = ({ menuStatus }) => {
   const currentUser = UserProfile.GetUserData();
@@ -47,14 +52,21 @@ const MobileMenu = ({ menuStatus }) => {
 
   const items = currentUser
     ? [
-        { label: "Home", path: "/home", icon: FaHome },
-        { label: "Profile", path: "/profile", icon: FaUser },
-        { label: "Booking", path: "/booking", icon: IoIosBookmarks },
+        { label: "Shop", path: "/shop", icon: BsBag },
+        {
+          path: "/create_post",
+          icon: FiPlusCircle,
+          label: "List Your Space",
+        },
+        { path: "/search", icon: BsSearch, label: "Browse" },
+
         { label: "Log Out", action: handleLogOut, icon: FaSignOutAlt },
       ]
     : [
-        { label: "Home", path: "/home", icon: FaHome },
         { label: "Login", path: "/login", icon: FaSignInAlt },
+        { label: "Shop", path: "/shop", icon: BsBag },
+        { path: "/search", icon: BsSearch, label: "Browse" },
+        { path: "/search", icon: BsSearch, label: "Browse" },
       ];
 
   if (!isActiveMoblie) return null;
@@ -89,7 +101,15 @@ const MobileMenu = ({ menuStatus }) => {
           <div className="px-8 py-5 bg-gray-50 border-b border-gray-100">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <FaUser className="w-4 h-4 text-gray-600" />
+                <img
+                  className="h-8 w-8 rounded-full object-cover border border-gray-200"
+                  src={currentUser.avatar || "/default-avatar.png"}
+                  alt="Profile"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "/default-avatar.png";
+                  }}
+                />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900 truncate">

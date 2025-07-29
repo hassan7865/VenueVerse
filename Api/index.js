@@ -10,6 +10,9 @@ const userRoute = require("./Routes/user")
 const bookingRoute = require("./Routes/booking")
 const productRoute = require("./Routes/product")
 const orderAuth = require("./Routes/order")
+const statsRoute = require("./Routes/stats")
+const otpRoute = require("./Routes/otp")
+const reviewRoute = require("./Routes/review")
 
 const app = express()
 
@@ -46,6 +49,9 @@ app.use("/api/user",userRoute)
 app.use("/api/booking",bookingRoute)
 app.use("/api/product",productRoute)
 app.use("/api/order",orderAuth)
+app.use("/api/stats",statsRoute)
+app.use("/api/otp",otpRoute)
+app.use("/api/review",reviewRoute)
 
 app.use(express.urlencoded({ extended: true }));
 app.use((err, req, res, next) => {

@@ -52,105 +52,7 @@ const UserBookingsPage = () => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const downloadInvoice = (booking) => {
-    try {
-      const doc = new jsPDF();
-
-      // Header
-      doc.setFontSize(24);
-      doc.setTextColor(41, 128, 185);
-      doc.text("BOOKING INVOICE", 105, 25, { align: "center" });
-
-      // Line under header
-      doc.setDrawColor(41, 128, 185);
-      doc.setLineWidth(0.5);
-      doc.line(20, 30, 190, 30);
-
-      // Customer Info Section
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text("CUSTOMER INFORMATION", 20, 45);
-
-      doc.setFontSize(11);
-      doc.setTextColor(60, 60, 60);
-      doc.text(`Name: ${currentUser.username}`, 20, 55);
-      doc.text(`Email: ${currentUser.email}`, 20, 62);
-
-      // Booking Details Section
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text("BOOKING DETAILS", 20, 80);
-
-      doc.setFontSize(11);
-      doc.setTextColor(60, 60, 60);
-      doc.text(`Booking ID: ${booking._id}`, 20, 90);
-      doc.text(`Service: ${booking.post?.title || "N/A"}`, 20, 97);
-      doc.text(`Date: ${formatDate(booking.startTime)}`, 20, 104);
-      doc.text(
-        `Time: ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}`,
-        20,
-        111
-      );
-
-      if (booking.post?.address) {
-        doc.text(`Location: ${booking.post.address}`, 20, 118);
-      }
-
-      let yPosition = booking.post?.address ? 125 : 118;
-
-      if (booking.notes) {
-        doc.text(`Notes: ${booking.notes}`, 20, yPosition);
-        yPosition += 7;
-      }
-
-      // Invoice Table
-      autoTable(doc, {
-        startY: yPosition + 10,
-        head: [["Description", "Amount"]],
-        body: [
-          ["Booking Fee", "$50.00"],
-          ["Tax (10%)", "$5.00"],
-          ["Total", "$55.00"],
-        ],
-        theme: "grid",
-        headStyles: {
-          fillColor: [41, 128, 185],
-          textColor: 255,
-          fontSize: 12,
-          fontStyle: "bold",
-        },
-        bodyStyles: {
-          fontSize: 11,
-        },
-        columnStyles: {
-          0: { cellWidth: 140 },
-          1: { cellWidth: 40, halign: "right" },
-        },
-        margin: { left: 20, right: 20 },
-      });
-
-      // Footer
-      const finalY = doc.lastAutoTable.finalY || yPosition + 50;
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text("Thank you for choosing our services!", 105, finalY + 20, {
-        align: "center",
-      });
-      doc.text(
-        `Generated on: ${new Date().toLocaleDateString()}`,
-        105,
-        finalY + 27,
-        { align: "center" }
-      );
-
-      // Save the PDF
-      doc.save(`invoice-${booking._id}.pdf`);
-      toast.success("Invoice downloaded successfully!");
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      toast.error("Failed to generate invoice");
-    }
-  };
+  
 
   if (isLoading) {
     return (
@@ -290,15 +192,7 @@ const UserBookingsPage = () => {
                       )}
                     </div>
 
-                    <div className="flex lg:flex-col gap-3">
-                      <button
-                        onClick={() => downloadInvoice(booking)}
-                        className="inline-flex items-center justify-center px-6 py-3 border-2 border-transparent text-sm font-semibold rounded-xl shadow-lg text-white bg-brand-blue transform transition-all duration-200 hover:scale-105"
-                      >
-                        <DownloadIcon className="mr-2 h-4 w-4" />
-                        Download Invoice
-                      </button>
-                    </div>
+                    
                   </div>
                 </div>
               </div>

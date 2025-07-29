@@ -6,6 +6,7 @@ import UserProfile from "../../UserProfile";
 import Loading from "../Components/Loading";
 import ListingDetails from "../Components/ListingDetail";
 import { showConfirmationToast } from "../Components/DeleteComponent";
+import ReviewComponent from "../Components/Reviews";
 
 const ListingPage = () => {
   const [listings, setListings] = useState({});
@@ -14,30 +15,35 @@ const ListingPage = () => {
   const [events, setEvents] = useState([]);
   const [operationalDays, setOperationalDays] = useState([]);
   const [operationalHours, setOperationalHours] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [formData, setFormData] = useState({ user: null, notes: "" });
+  const [reviews, setreviews] = useState([]);
 
   const navigate = useNavigate();
   const params = useParams();
   const currentUser = UserProfile.GetUserData();
   const calendarRef = useRef();
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const listingRes = await api.get(`/post/${params.id}`);
-      const listingData = listingRes.data;
-      setListings(listingData);
-      setOwner(listingData.user);
-
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const eventsRes = await api.get(
-          `/booking/calendar?type=${listingData.type}&id=${listingData._id}`
-        );
+        // Step 1: Fetch listing
+        const listingRes = await api.get(`/post/${params.id}`);
+        const listingData = listingRes.data;
+        setListings(listingData);
+        setOwner(listingData.user);
+
+        // Step 2: Fetch calendar & reviews in parallel using type from listing
+        const [eventsRes, reviewsRes] = await Promise.all([
+          api.get(
+            `/booking/calendar?type=${listingData.type}&id=${listingData._id}`
+          ),
+          api.get(
+            `/review?type=${listingData.type}&sourceId=${listingData._id}`
+          ),
+        ]);
+
+        // Step 3: Set calendar data
         const { operationDays, operationHours, events } = eventsRes.data;
-
-
         const formattedEvents = events.map((event) => ({
           id: event.id,
           title: event.title || "Booked",
@@ -45,22 +51,19 @@ const ListingPage = () => {
           end: new Date(event.end),
           allDay: false,
         }));
-
         setEvents(formattedEvents);
         setOperationalDays(operationDays);
         setOperationalHours(operationHours);
 
-      } catch {
-        // Optionally handle events fetch errors here, or just ignore
+        // Step 4: Set reviews
+        setreviews(reviewsRes.data.reviews);
+      } catch (error) {
+        toast.error(error.response?.data?.message || error.message);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      toast.error(error.response?.data?.message || error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
     fetchData();
   }, [params.id]);
 
@@ -74,28 +77,26 @@ const ListingPage = () => {
     }
   };
 
- 
-
   const handlePostDelete = async (venueId, type) => {
     const isConfirmed = await showConfirmationToast({
-      title: 'Delete Confirmation',
+      title: "Delete Confirmation",
       message: `Are you sure you want to delete this ${type}? This action cannot be undone.`,
-      variant: 'danger',
-      confirmText: 'Yes, Delete',
-      cancelText: 'Cancel',
+      variant: "danger",
+      confirmText: "Yes, Delete",
+      cancelText: "Cancel",
       onConfirm: () => console.log(`Confirmed deletion of ${type}`),
-      onCancel: () => console.log(`Cancelled deletion of ${type}`)
+      onCancel: () => console.log(`Cancelled deletion of ${type}`),
     });
-  
+
     if (!isConfirmed) return;
-  
+
     setLoading(true);
     const toastId = toast.loading(`Deleting ${type}...`);
-  
+
     try {
       await api.delete(`/post/${venueId}`);
       toast.success(`${type} deleted successfully`);
-      navigate("/listing")
+      navigate("/listing");
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
       const message =
@@ -105,7 +106,6 @@ const ListingPage = () => {
       setLoading(false);
     }
   };
-
 
   const handleStartChat = () => {
     if (!currentUser) {
@@ -128,20 +128,27 @@ const ListingPage = () => {
   }
 
   return (
-    <ListingDetails
-      listings={listings}
-      owner={owner}
-      currentUser={currentUser}
-      events={events}
-      operationalDays={operationalDays}
-      operationalHours={operationalHours}
-      calendarRef={calendarRef}
-      handleUrlShare={handleUrlShare}
-      handlePostDelete={handlePostDelete}
-      handleStartChat={handleStartChat}
-      navigate={navigate}
-      params={params}
-    />
+    <>
+      <ListingDetails
+        listings={listings}
+        owner={owner}
+        currentUser={currentUser}
+        events={events}
+        operationalDays={operationalDays}
+        operationalHours={operationalHours}
+        calendarRef={calendarRef}
+        handleUrlShare={handleUrlShare}
+        handlePostDelete={handlePostDelete}
+        handleStartChat={handleStartChat}
+        navigate={navigate}
+        params={params}
+      />
+      <ReviewComponent
+        existingReviews={reviews}
+        type={listings.type}
+        sourceId={params.id}
+      />
+    </>
   );
 };
 

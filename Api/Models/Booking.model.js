@@ -2,7 +2,11 @@ const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema(
   {
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     type: {
       type: String,
@@ -23,7 +27,8 @@ const bookingSchema = new mongoose.Schema(
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
 
-    durationHours: { type: Number }, // computed: endTime - startTime
+    durationHours: { type: Number },
+    price: { type: Number, required: true },
 
     notes: String,
   },
@@ -32,12 +37,13 @@ const bookingSchema = new mongoose.Schema(
 
 bookingSchema.pre("save", function (next) {
   if (this.startTime && this.endTime) {
-    const diff = (new Date(this.endTime) - new Date(this.startTime)) / (1000 * 60 * 60);
+    const diff =
+      (new Date(this.endTime) - new Date(this.startTime)) / (1000 * 60 * 60);
     this.durationHours = parseFloat(diff.toFixed(2));
   }
   next();
 });
 
-const Booking = mongoose.model("Booking",bookingSchema );
+const Booking = mongoose.model("Booking", bookingSchema);
 
-module.exports = Booking
+module.exports = Booking;

@@ -25,6 +25,7 @@ import ProfilePage from "./Pages/Profile";
 import ShopSearch from "./Pages/SearchShopItem";
 import UserOrdersPage from "./Pages/Order";
 import SuccessPage from "./Pages/OrderSuccessfull";
+import Dashboard from "./Pages/Dashboard";
 
 function App() {
   const stripePromise = loadStripe(
@@ -55,6 +56,7 @@ function App() {
           <Route path="/create_shopitem" element={<CreateDecorItem />} />
           <Route path="/update_shopitem/:id" element={<UpdateDecorItem />} />
           <Route path="/shop-success?" element={<SuccessPage />} />
+          <Route path="/dashboard" element={<Dashboard/>}/>
         </Route>
       </Routes>
 
