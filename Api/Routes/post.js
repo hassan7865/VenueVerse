@@ -108,8 +108,19 @@ route.get("/", async (req, res, next) => {
     const limit = 10;
     const skip = (page - 1) * limit;
 
-    const listings = await post.find(query).skip(skip).limit(limit);
+    const listingsRaw = await post.find(query).skip(skip).limit(limit);
     const total = await post.countDocuments(query);
+
+    // Map listings: use discountedPrice if offer is true
+    const listings = listingsRaw.map((listing) => {
+      const priceToShow =
+        listing.offer && listing.discountedPrice ? listing.discountedPrice : listing.price;
+
+      return {
+        ...listing.toObject(),
+        price: priceToShow,
+      };
+    });
 
     return res.status(200).json({
       listings,
@@ -122,5 +133,6 @@ route.get("/", async (req, res, next) => {
     next(err);
   }
 });
+
 
 module.exports = route;

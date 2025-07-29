@@ -1,4 +1,4 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -20,6 +20,13 @@ const productSchema = new mongoose.Schema(
       required: [true, "Product price is required"],
       min: [0, "Price must be a positive number"],
     },
+    offer: {
+      type: Boolean,
+      required: true,
+    },
+    discountPrice: {
+      type: Number,
+    },
     category: {
       type: String,
       required: true,
@@ -39,10 +46,6 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Stock cannot be negative"],
     },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     timestamps: true,
@@ -51,4 +54,4 @@ const productSchema = new mongoose.Schema(
 
 const Product = mongoose.model("Product", productSchema);
 
-module.exports = Product
+module.exports = Product;

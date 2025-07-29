@@ -81,58 +81,82 @@ route.delete("/:id", verifyToken, async (req, res, next) => {
   }
 });
 
-// Get All Products with optional category filter
+
 route.get("/", async (req, res, next) => {
   try {
-    const { 
-      searchTerm, 
-      category, 
-      sortBy, 
+    const {
+      searchTerm,
+      category,
+      sortBy,
       inStock,
+      hasOffer,
       page = 1,
       limit = 12
     } = req.query;
 
-    // Build filter object
-    const filter = {};
+    const matchStage = {};
 
-    // Search term filter (case insensitive)
+    // Search filters
     if (searchTerm) {
-      filter.$or = [
+      matchStage.$or = [
         { name: { $regex: searchTerm, $options: 'i' } },
         { description: { $regex: searchTerm, $options: 'i' } }
       ];
     }
 
-    // Category filter
     if (category && category !== 'all') {
-      filter.category = category;
+      matchStage.category = category;
     }
 
-    // In stock filter
     if (inStock === 'true') {
-      filter.stock = { $gt: 0 };
+      matchStage.stock = { $gt: 0 };
     }
 
-    // Sorting
-    let sortOption = { createdAt: -1 }; // Default: newest first
+    if (hasOffer === 'true') {
+      matchStage.offer = true;
+    }
+
+    const sortOption = {};
     if (sortBy === 'price-low-high') {
-      sortOption = { price: 1 }; // Price: Low to High
+      sortOption.effectivePrice = 1;
     } else if (sortBy === 'price-high-low') {
-      sortOption = { price: -1 }; // Price: High to Low
+      sortOption.effectivePrice = -1;
+    } else {
+      sortOption.createdAt = -1; // default sort
     }
 
-    // Pagination
-    const skip = (page - 1) * limit;
-    const total = await Product.countDocuments(filter);
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const lim = parseInt(limit);
 
-    // Execute query
-    const products = await Product.find(filter)
-      .sort(sortOption)
-      .skip(skip)
-      .limit(parseInt(limit));
+    const products = await Product.aggregate([
+      { $match: matchStage },
 
-    // Calculate total pages
+      // Add a computed field for sorting
+      {
+        $addFields: {
+          effectivePrice: {
+            $cond: {
+              if: { $and: [ { $eq: ["$offer", true] }, { $ifNull: ["$discountedPrice", false] } ] },
+              then: "$discountedPrice",
+              else: "$price"
+            }
+          }
+        }
+      },
+
+      { $sort: sortOption },
+      { $skip: skip },
+      { $limit: lim },
+
+      // Optionally remove the helper field before returning
+      {
+        $project: {
+          effectivePrice: 0
+        }
+      }
+    ]);
+
+    const total = await Product.countDocuments(matchStage);
     const totalPages = Math.ceil(total / limit);
 
     return res.status(200).json({
@@ -141,10 +165,12 @@ route.get("/", async (req, res, next) => {
       totalPages,
       total
     });
+
   } catch (err) {
     next(err);
   }
 });
+
 
 route.get("/user/:userId", async (req, res, next) => {
   try {
