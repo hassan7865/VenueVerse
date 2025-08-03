@@ -170,9 +170,9 @@ const UserProfileCatalogue = () => {
                 <div className="relative -mt-16 mb-4 sm:mb-0">
                   <div className="w-32 h-32 rounded-2xl bg-white p-1 shadow-xl">
                     <div className="w-full h-full rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center overflow-hidden">
-                      {userData.profilePicture ? (
+                      {userData.avatar ? (
                         <img
-                          src={userData.profilePicture}
+                          src={userData.avatar}
                           alt={`${userData.username}'s profile`}
                           className="w-full h-full object-cover rounded-xl"
                         />

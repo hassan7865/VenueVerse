@@ -24,7 +24,7 @@ const NextArrow = ({ onClick }) => (
 
 const FeedBack = () => {
   const settings = {
-    dots: true,
+    dots: false,
     infinite: true,
     speed: 500,
     autoplay: true,
@@ -40,7 +40,7 @@ const FeedBack = () => {
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
-          dots: true,
+          dots: false,
           arrows: false,
           autoplay: true,
           infinite: true
@@ -51,7 +51,7 @@ const FeedBack = () => {
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
-          dots: true,
+          dots: false,
           arrows: false,
           autoplay: true,
           infinite: true
