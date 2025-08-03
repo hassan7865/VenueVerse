@@ -6,6 +6,9 @@ const router = express.Router();
 const bodyParser = require("body-parser");
 const throwError = require("../Helper/error");
 const verifyToken = require("../Helper/verifyToken");
+const sendEmail = require("../Helper/email");
+const User = require("../Models/User.model");
+const { orderSuccessTemplate } = require("../Constants/emailbody");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 router.post("/create-checkout-session", verifyToken, async (req, res) => {
@@ -16,7 +19,7 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       payment_method_types: ["card"],
       line_items: items.map((item) => ({
         price_data: {
-          currency: "usd",
+          currency: "pkr",
           product_data: {
             name: item.name,
           },
@@ -81,6 +84,23 @@ router.post("/confirm-order", verifyToken, async (req, res, next) => {
     });
 
     const savedOrder = await newOrder.save();
+
+    const userInfo = await User.findById(userId, "email username");
+
+    if (!userInfo) {
+      next(throwError(404, "User not found"));
+    }
+
+    await sendEmail({
+      to: userInfo.email,
+      subject: "Order Successful",
+      html: orderSuccessTemplate(
+        userInfo.username,
+        savedOrder._id,
+        totalAmount
+      ),
+    });
+
     res.status(201).json(savedOrder);
   } catch (err) {
     console.error("Failed to confirm order:", err.message);
@@ -105,7 +125,7 @@ router.get("/paginated", verifyToken, async (req, res, next) => {
   try {
     const sellerId = req.user._id;
 
-    // Pagination params
+  
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -114,7 +134,6 @@ router.get("/paginated", verifyToken, async (req, res, next) => {
     const products = await Product.find({ userId: sellerId }, "_id");
     const productIds = products.map((p) => p._id);
 
-    // Step 2: Find orders that include these products
     const filter = { "items.product": { $in: productIds } };
 
     // Total count (for pagination metadata)

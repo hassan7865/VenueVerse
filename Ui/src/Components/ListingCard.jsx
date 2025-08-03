@@ -2,7 +2,7 @@ import React from "react";
 import { FaChartArea, FaLocationArrow } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import UserProfile from "../../UserProfile";
-import { FaLocationDot, FaPeopleGroup } from "react-icons/fa6";
+import { FaLocationDot, FaPeopleGroup, FaClock, FaCalendarDays } from "react-icons/fa6";
 
 const ListingCard = ({ listing }) => {
   const currentUser = UserProfile.GetUserData();
@@ -20,6 +20,9 @@ const ListingCard = ({ listing }) => {
     userId,
     imgUrl,
     offer,
+    operationHours,
+    operationDays,
+    description,
   } = listing;
 
   // Calculate discount percentage from discountPrice field
@@ -37,6 +40,51 @@ const ListingCard = ({ listing }) => {
     })
       .format(amount)
       .replace("PKR", "PKR ");
+  };
+
+  // Format operation hours to 12-hour format
+  const formatOperationHours = () => {
+    if (!operationHours?.open || !operationHours?.close) return "Contact for hours";
+    
+    const formatTime = (time) => {
+      const [hours, minutes] = time.split(':');
+      const hour = parseInt(hours);
+      const ampm = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      return `${hour12}:${minutes} ${ampm}`;
+    };
+    
+    return `${formatTime(operationHours.open)} - ${formatTime(operationHours.close)}`;
+  };
+
+  // Get operation days count
+  const getOperationDaysText = () => {
+    if (!operationDays || operationDays.length === 0) return "Contact for availability";
+    if (operationDays.length === 7) return "Open 7 days";
+    return `${operationDays.length} days/week`;
+  };
+
+  // Extract service type from title or description
+  const getServiceType = () => {
+    const titleLower = title.toLowerCase();
+    const descLower = description?.toLowerCase() || "";
+    
+    if (titleLower.includes('catering') || descLower.includes('catering')) {
+      return 'Catering Service';
+    }
+    if (titleLower.includes('photography') || descLower.includes('photography')) {
+      return 'Photography Service';
+    }
+    if (titleLower.includes('decoration') || descLower.includes('decoration')) {
+      return 'Decoration Service';
+    }
+    if (titleLower.includes('music') || titleLower.includes('dj')) {
+      return 'Music & Entertainment';
+    }
+    if (titleLower.includes('makeup') || titleLower.includes('beauty')) {
+      return 'Beauty Service';
+    }
+    return 'Professional Service';
   };
 
   return (
@@ -112,20 +160,18 @@ const ListingCard = ({ listing }) => {
           ) : (
             <div className="space-y-3">
               <div className="flex items-center text-sm text-gray-600">
-                <FaLocationArrow
-                  className="mr-3 text-brand-blue-600 flex-shrink-0"
-                  size={14}
-                />
-                <span className="line-clamp-1">
-                  {address || "Service location"}
-                </span>
-              </div>
-              <div className="flex items-center text-sm text-gray-600">
                 <FaLocationDot
                   className="mr-3 text-brand-blue-600 flex-shrink-0"
                   size={14}
                 />
-                <span className="line-clamp-1">Professional Service</span>
+                <span className="line-clamp-1">{getServiceType()}</span>
+              </div>
+              <div className="flex items-center text-sm text-gray-600">
+                <FaClock
+                  className="mr-3 text-brand-blue-600 flex-shrink-0"
+                  size={14}
+                />
+                <span className="line-clamp-1">{formatOperationHours()}</span>
               </div>
             </div>
           )}
@@ -147,12 +193,12 @@ const ListingCard = ({ listing }) => {
           ) : (
             <>
               <div className="flex items-center">
-                <FaPeopleGroup className="mr-2 text-brand-blue-600" size={14} />
-                <span>Available</span>
+                <FaCalendarDays className="mr-2 text-brand-blue-600" size={14} />
+                <span>{getOperationDaysText()}</span>
               </div>
               <div className="flex items-center">
-                <FaChartArea className="mr-2 text-brand-blue-600" size={14} />
-                <span>On-demand</span>
+                <FaPeopleGroup className="mr-2 text-brand-blue-600" size={14} />
+                <span>All events</span>
               </div>
             </>
           )}
@@ -185,7 +231,7 @@ const ListingCard = ({ listing }) => {
           ) : (
             <div>
               <span className="text-xl font-semibold text-brand-blue-600">
-                {formatPrice(price)}
+                {price === 1 ? "Contact for pricing" : formatPrice(price)}
               </span>
             </div>
           )}

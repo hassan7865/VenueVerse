@@ -31,44 +31,38 @@ const Header = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo & Navigation */}
-            <div className="flex items-center">
-              <Link
-                to="/"
-                className="group flex items-center space-x-3 transition-all duration-300"
-              >
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-700 rounded-xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-                  <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
-                    <FiHome className="text-white w-5 h-5" />
-                  </div>
-                </div>
-                <span className="hidden sm:inline text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent tracking-tight">
-                  VenueVenture
-                </span>
-              </Link>
+           <div className="flex items-center">
+  <Link
+    to="/"
+    className="group flex items-center space-x-3 transition-all duration-300"
+  >
+    <div className="relative">
+      <img src="/images.svg" className="h-8 w-8" alt="Logo" />
+    </div>
+    <span className="hidden sm:inline text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent tracking-tight">
+      VenueVerse
+    </span>
+  </Link>
 
-              <nav className="hidden md:ml-12 md:flex md:space-x-1">
-                {[
-                  { to: "/search", icon: BsSearch, label: "Browse" },
-                  {
-                    to: "/create_post",
-                    icon: FiPlusCircle,
-                    label: "List Your Space",
-                  },
-                  { to: "/shop", icon: ShoppingBagIcon, label: "Shop" },
-                ].map(({ to, icon: Icon, label }) => (
-                  <Link
-                    key={to}
-                    to={to}
-                    className="group flex items-center px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50/80 transition-all duration-200 relative overflow-hidden"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
-                    <Icon className="relative w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
-                    <span className="relative">{label}</span>
-                  </Link>
-                ))}
-              </nav>
-            </div>
+  <nav className="hidden md:ml-12 md:flex md:space-x-1">
+    {[
+      { to: "/search", icon: BsSearch, label: "Browse" },
+      { to: "/create_post", icon: FiPlusCircle, label: "List Your Space" },
+      { to: "/shop", icon: ShoppingBagIcon, label: "Shop" },
+    ].map(({ to, icon: Icon, label }) => (
+      <Link
+        key={to}
+        to={to}
+        className="group flex items-center px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50/80 transition-all duration-200 relative overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
+        <Icon className="relative w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+        <span className="relative">{label}</span>
+      </Link>
+    ))}
+  </nav>
+</div>
+
 
             {/* Search & Auth */}
             <div className="flex items-center space-x-4">

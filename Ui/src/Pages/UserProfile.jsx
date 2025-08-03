@@ -102,7 +102,7 @@ const UserProfileCatalogue = () => {
     );
   }
 
-  const isCurrentUser = currentUser && currentUser._id
+  const isCurrentUser = currentUser && currentUser._id == userId
   const totalListings = shopItems.length + services.length + venues.length;
 
   const stats = [

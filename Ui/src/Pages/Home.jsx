@@ -3,6 +3,8 @@ import OfferedListing from "../Components/OfferedListing";
 import VenueListing from "../Components/VenueListing";
 import ServiceListing from "../Components/ServiceListing";
 import { FiArrowRight, FiSearch, FiPlusCircle } from "react-icons/fi";
+import VenueHero from "../Components/Hero";
+import FeedBack from "../Components/FeedBack";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -10,61 +12,7 @@ const Home = () => {
   return (
     <div className="font-sans antialiased text-gray-900 bg-white">
       {/* Professional Hero Section */}
-      <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-gray-900">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black opacity-90 z-10"></div>
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?auto=format&fit=crop&w=1770&q=80')] bg-cover bg-center"></div>
-        
-        <div className="relative z-20 mx-auto max-w-7xl px-6 lg:px-8 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="space-y-6">
-                <h1 className="text-4xl lg:text-6xl font-light tracking-tight text-white leading-tight">
-                  Elevate Your Events with 
-                  <span className="block font-medium bg-gradient-to-r from-amber-300 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
-                    Premium Venues
-                  </span>
-                </h1>
-                <p className="text-xl text-gray-300 leading-relaxed max-w-xl">
-                  Discover and book exceptional venues for weddings, corporate events, and special occasions. Our curated selection ensures your event stands out.
-                </p>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={() => navigate("/search")}
-                  className="group inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  <FiSearch className="mr-2 w-5 h-5" />
-                  Explore Venues
-                  <FiArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
-                <button
-                  onClick={() => navigate("/create_post")}
-                  className="inline-flex items-center justify-center px-8 py-4 border-2 border-white/20 text-white font-medium rounded-lg hover:border-white/40 hover:bg-white/5 transition-all duration-300 backdrop-blur-sm"
-                >
-                  <FiPlusCircle className="mr-2 w-5 h-5" />
-                  List Your Space
-                </button>
-              </div>
-              
-              <div className="flex items-center space-x-8 text-sm text-gray-400">
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <span className="text-white">1000+ Venues</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
-                  <span className="text-white">500+ Services</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full mr-2"></div>
-                  <span className="text-white">Trusted Platform</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+<VenueHero/>
 
       {/* Featured Listings */}
       <section className="py-24 bg-white relative">
@@ -139,6 +87,8 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      <FeedBack/>
 
       {/* Service Listings */}
       <section className="py-24 bg-white">
@@ -272,20 +222,7 @@ const Home = () => {
               </button>
             </div>
             
-            <div className="flex items-center justify-center space-x-8 text-sm text-gray-400">
-              <div className="flex items-center">
-                <span className="w-1 h-1 bg-green-400 rounded-full mr-2"></span>
-                <span className="text-white">Trusted by 10k+</span>
-              </div>
-              <div className="flex items-center">
-                <span className="w-1 h-1 bg-blue-400 rounded-full mr-2"></span>
-                <span className="text-white">24/7 Support</span>
-              </div>
-              <div className="flex items-center">
-                <span className="w-1 h-1 bg-purple-400 rounded-full mr-2"></span>
-                <span className="text-white">Secure Platform</span>
-              </div>
-            </div>
+        
           </div>
         </div>
       </section>

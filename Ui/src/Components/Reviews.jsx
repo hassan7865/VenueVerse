@@ -29,7 +29,7 @@ const ReviewComponent = ({
     },
   });
 
-  const ratingValue = watch("rating");
+  const selectedRating = watch("rating"); // Renamed for clarity
   const commentValue = watch("comment");
 
   const submitReview = async (data) => {
@@ -208,17 +208,19 @@ const ReviewComponent = ({
                     </label>
                     <div className="flex items-center gap-1">
                       {[...Array(maxRating)].map((_, index) => {
-                        const ratingValue = index + 1;
+                        const starValue = index + 1; // Individual star value
+                        const currentRating = hoverRating || selectedRating; // Current rating to compare against
+                        
                         return (
                           <button
                             key={index}
                             type="button"
-                            onClick={() => setValue("rating", ratingValue)}
-                            onMouseEnter={() => setHoverRating(ratingValue)}
+                            onClick={() => setValue("rating", starValue)}
+                            onMouseEnter={() => setHoverRating(starValue)}
                             onMouseLeave={() => setHoverRating(0)}
                             className="focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded p-1"
                           >
-                            {(hoverRating || ratingValue) >= ratingValue ? (
+                            {currentRating >= starValue ? (
                               <Star className="w-7 h-7 fill-amber-400 text-amber-400 transition-colors duration-150" />
                             ) : (
                               <Star className="w-7 h-7 text-gray-300 hover:text-amber-300 transition-colors duration-150" />
@@ -233,9 +235,9 @@ const ReviewComponent = ({
                         required: "Please select a rating",
                       })}
                     />
-                    {(hoverRating || ratingValue) > 0 && (
+                    {(hoverRating || selectedRating) > 0 && (
                       <p className="mt-2 text-sm text-gray-600">
-                        {hoverRating || ratingValue} out of {maxRating} stars
+                        {hoverRating || selectedRating} out of {maxRating} stars
                       </p>
                     )}
                     {errors.rating && (

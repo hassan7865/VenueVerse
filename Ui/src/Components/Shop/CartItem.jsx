@@ -78,11 +78,11 @@ const CartItem = ({ item }) => {
           {/* Price section */}
           <div className="flex items-center gap-3">
             <div className="text-sm text-gray-600">
-              ${parseFloat(price).toFixed(2)}
+              Rs {parseFloat(price).toFixed(2)}
             </div>
             
             <div className="text-sm font-semibold text-gray-800">
-              ${parseFloat(price * amount).toFixed(2)}
+              Rs {parseFloat(price * amount).toFixed(2)}
             </div>
           </div>
         </div>

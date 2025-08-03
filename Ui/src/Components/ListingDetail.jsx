@@ -31,6 +31,7 @@ import { BsGrid1X2, BsWhatsapp } from "react-icons/bs";
 import { BookIcon } from "lucide-react";
 import BookingDialog from "./Booking";
 import { Link } from "react-router-dom";
+import MediaViewer from "./MediaViewer";
 
 const ListingDetails = ({
   listings,
@@ -68,7 +69,7 @@ const ListingDetails = ({
     imgUrl,
   } = listings;
 
-  console.log(imgUrl)
+  console.log(imgUrl);
 
   function SamplePrevArrow({ onClick }) {
     return (
@@ -92,63 +93,68 @@ const ListingDetails = ({
     );
   }
 
- const settings = {
-  dots: true,
-  infinite: imgUrl?.length > 1,
-  speed: 500,
-  slidesToShow: 1,
-  slidesToScroll: 1,
-  nextArrow: imgUrl?.length > 1 ? <SampleNextArrow /> : null,
-  prevArrow: imgUrl?.length > 1 ? <SamplePrevArrow /> : null,
-  beforeChange: (current, next) => setCurrentSlide(next),
-  appendDots: (dots) => (
-    <div className="absolute bottom-6 w-full">
-      <ul className="flex justify-center space-x-2">
-        {dots.map((dot, index) => (
-          <li
-            key={index}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              currentSlide === index ? "bg-white w-4" : "bg-white/50"
-            }`}
-          >
-            {dot}
-          </li>
-        ))}
-      </ul>
-    </div>
-  ),
-};
+  const settings = {
+    dots: true,
+    infinite: imgUrl?.length > 1,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    nextArrow: imgUrl?.length > 1 ? <SampleNextArrow /> : null,
+    prevArrow: imgUrl?.length > 1 ? <SamplePrevArrow /> : null,
+    beforeChange: (current, next) => setCurrentSlide(next),
+    appendDots: (dots) => (
+      <div className="absolute bottom-6 w-full">
+        <ul className="flex justify-center space-x-2">
+          {dots.map((dot, index) => (
+            <li
+              key={index}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                currentSlide === index ? "bg-white w-4" : "bg-white/50"
+              }`}
+            >
+              {dot}
+            </li>
+          ))}
+        </ul>
+      </div>
+    ),
+  };
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-white">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-gray-900 to-gray-800">
-        <Slider {...settings} className="z-10">
+      <div className="relative bg-white">
+        <Slider {...settings} className="z-[10]">
           {imgUrl?.map((listing, index) => {
-            console.log(listing)
+            console.log(listing);
             const isVideo =
               listing.type?.startsWith("video") ||
               listing.path?.match(/\.(mp4|webm|mov)$/i);
 
             return (
-              <div key={index} className="relative h-[80vh] w-full">
-                {isVideo ? (
-                  <video
-                    src={listing.path}
-                    className="absolute inset-0 w-full h-full object-cover bg-no-repeat"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                  />
-                ) : (
-                  <img
-                    src={listing.path}
-                    alt={`Listing ${index + 1}`}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
-              </div>
+              <MediaViewer url={listing.path}>
+                <div
+                  key={index}
+                  className="relative h-[50vh] md:h-[70vh] w-full bg-white"
+                >
+                  {isVideo ? (
+                    <video
+                      src={listing.path}
+                      className="absolute inset-0 w-full h-full object-contain bg-no-repeat"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                    />
+                  ) : (
+                    <img
+                      src={listing.path}
+                      alt={`Listing ${index + 1}`}
+                      className="absolute inset-0 w-full h-full object-contain"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+                </div>
+              </MediaViewer>
             );
           })}
         </Slider>

@@ -10,6 +10,9 @@ const { bookingSuccessTemplate } = require("../Constants/emailbody");
 const User = require("../Models/User.model");
 const router = express.Router();
 
+const  { DateTime } = require("luxon");
+
+// Your route definition
 router.post("/create", verifyToken, async (req, res, next) => {
   try {
     const {
@@ -49,26 +52,28 @@ router.post("/create", verifyToken, async (req, res, next) => {
       return next(throwError(500, "Operational hours not configured."));
     }
 
-    const toMinutes = (timeStr) => {
-      const [h, m] = timeStr.split(":").map(Number);
-      return h * 60 + m;
-    };
-
-    const start = new Date(startTime);
-    const end = new Date(endTime);
+    // Parse booking start and end times using Luxon in local timezone
+    const TIMEZONE = "Asia/Karachi"; // Change if needed
+    const start = DateTime.fromISO(startTime, { zone: TIMEZONE });
+    const end = DateTime.fromISO(endTime, { zone: TIMEZONE });
 
     if (end <= start) {
       return next(throwError(400, "End time must be after start time."));
     }
 
-    const startBookingMinutes = start.getHours() * 60 + start.getMinutes();
-    const endBookingMinutes = end.getHours() * 60 + end.getMinutes();
+    // Parse operational hours into minutes since midnight
+    const toMinutes = (timeStr) => {
+      const [h, m] = timeStr.split(":").map(Number);
+      return h * 60 + m;
+    };
 
     const openMinutes = toMinutes(operationHours.open);
     const closeMinutes = toMinutes(operationHours.close);
+    const startMinutes = start.hour * 60 + start.minute;
+    const endMinutes = end.hour * 60 + end.minute;
 
     const isValidTime =
-      endBookingMinutes <= closeMinutes && startBookingMinutes >= openMinutes;
+      startMinutes >= openMinutes && endMinutes <= closeMinutes;
 
     const to12Hour = (timeStr) => {
       const [hour, minute] = timeStr.split(":").map(Number);
@@ -88,14 +93,14 @@ router.post("/create", verifyToken, async (req, res, next) => {
       );
     }
 
-    const filter = {
+    // Check for booking conflicts
+    const conflict = await Booking.findOne({
       type,
       ...(type === "venue" ? { venueId } : { serviceId }),
-      startTime: { $lt: end },
-      endTime: { $gt: start },
-    };
+      startTime: { $lt: end.toJSDate() },
+      endTime: { $gt: start.toJSDate() },
+    });
 
-    const conflict = await Booking.findOne(filter);
     if (conflict) {
       return next(
         throwError(409, `This ${type} is already booked for the selected time.`)
@@ -107,8 +112,8 @@ router.post("/create", verifyToken, async (req, res, next) => {
       type,
       venueId: type === "venue" ? venueId : undefined,
       serviceId: type === "service" ? serviceId : undefined,
-      startTime,
-      endTime,
+      startTime: start.toJSDate(),
+      endTime: end.toJSDate(),
       price,
       notes,
     });
@@ -119,10 +124,9 @@ router.post("/create", verifyToken, async (req, res, next) => {
     const userDoc = await User.findById(userId);
     if (!userDoc) return next(throwError(404, "User not found."));
 
-    // Get venue/service name
     const venueName = postDoc.title || postDoc.name || "Unknown";
 
-    // Generate PDF invoice
+    // Generate invoice PDF
     const pdfBuffer = await generateInvoice({
       bookingId: saved._id.toString(),
       customerName: userDoc.username || "N/A",

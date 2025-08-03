@@ -6,6 +6,7 @@ import api from "../lib/Url";
 import toast from "react-hot-toast";
 import { useMediaQuery } from "react-responsive";
 import ListingCard from "../Components/ListingCard";
+import Loading from "../Components/Loading";
 
 const Search = () => {
   const [listings, setListings] = useState([]);
@@ -18,7 +19,7 @@ const Search = () => {
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
-    totalItems: 0
+    totalItems: 0,
   });
 
   const VenueTypes = [
@@ -46,11 +47,11 @@ const Search = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     // Update filters with the current search term and reset to page 1
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       searchTerm: searchTerm,
     }));
-    setPagination(prev => ({...prev, currentPage: 1}));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
   const clearSearch = () => {
@@ -65,7 +66,7 @@ const Search = () => {
     setPagination({
       currentPage: 1,
       totalPages: 1,
-      totalItems: 0
+      totalItems: 0,
     });
   };
 
@@ -88,11 +89,10 @@ const Search = () => {
           venuetype: venueTypeParam,
           capacity: capacityParam,
           offer: offerParam,
-          page: pageParam.toString()
+          page: pageParam.toString(),
         });
 
         const url = `/post?${queryParams.toString()}`;
-       
 
         const res = await api.get(url);
 
@@ -100,9 +100,8 @@ const Search = () => {
         setPagination({
           currentPage: res.data.currentPage || 1,
           totalPages: res.data.totalPages || 1,
-          totalItems: res.data.total || 0
+          totalItems: res.data.total || 0,
         });
-        
       } catch (error) {
         console.error("Error in fetching listings:", error);
         toast.error(error.response?.data?.message || "Error fetching listings");
@@ -110,7 +109,7 @@ const Search = () => {
         setPagination({
           currentPage: 1,
           totalPages: 1,
-          totalItems: 0
+          totalItems: 0,
         });
       } finally {
         setLoading(false);
@@ -121,37 +120,37 @@ const Search = () => {
   }, [filters, pagination.currentPage]); // Remove searchTerm from dependencies
 
   const handleFilterChange = (name, value) => {
-    setPagination(prev => ({...prev, currentPage: 1}));
-    
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+
     // Handle special cases for filter changes
     let newFilters = { ...filters, [name]: value };
-    
+
     // If changing from venue to service/all, clear venue-specific filters
-    if (name === 'type' && value !== 'venue') {
+    if (name === "type" && value !== "venue") {
       newFilters = {
         ...newFilters,
         venuetype: "",
-        capacity: ""
+        capacity: "",
       };
     }
-    
+
     setFilters(newFilters);
   };
 
   const handlePreviousPage = () => {
     if (pagination.currentPage > 1) {
-      setPagination(prev => ({...prev, currentPage: prev.currentPage - 1}));
+      setPagination((prev) => ({ ...prev, currentPage: prev.currentPage - 1 }));
     }
   };
 
   const handleNextPage = () => {
     if (pagination.currentPage < pagination.totalPages) {
-      setPagination(prev => ({...prev, currentPage: prev.currentPage + 1}));
+      setPagination((prev) => ({ ...prev, currentPage: prev.currentPage + 1 }));
     }
   };
 
   const handlePageSelect = (page) => {
-    setPagination(prev => ({...prev, currentPage: page}));
+    setPagination((prev) => ({ ...prev, currentPage: page }));
   };
 
   useEffect(() => {
@@ -164,8 +163,14 @@ const Search = () => {
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = isMobile ? 3 : 5;
-    let startPage = Math.max(1, pagination.currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(pagination.totalPages, startPage + maxVisiblePages - 1);
+    let startPage = Math.max(
+      1,
+      pagination.currentPage - Math.floor(maxVisiblePages / 2)
+    );
+    let endPage = Math.min(
+      pagination.totalPages,
+      startPage + maxVisiblePages - 1
+    );
 
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
@@ -200,7 +205,9 @@ const Search = () => {
 
           <div className="flex flex-col md:flex-row min-h-screen">
             {/* Sidebar - Filter Panel */}
-            <div className={`${showMobileFilters ? 'block' : 'hidden'} md:block w-full md:w-80 bg-white border-r border-gray-200 flex-shrink-0 md:sticky md:top-0 md:h-screen`}>
+            <div
+              className={`${showMobileFilters ? "block" : "hidden"} md:block w-full md:w-80 bg-white border-r border-gray-200 flex-shrink-0 md:sticky md:top-0 md:h-screen`}
+            >
               <div className="h-full flex flex-col">
                 {/* Header */}
                 <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
@@ -209,7 +216,7 @@ const Search = () => {
                     Filters
                   </h2>
                   {isMobile && (
-                    <button 
+                    <button
                       onClick={() => setShowMobileFilters(false)}
                       className="p-1 text-gray-500 hover:text-gray-700"
                     >
@@ -251,15 +258,20 @@ const Search = () => {
                       {[
                         { value: "all", label: "All" },
                         { value: "venue", label: "Venue" },
-                        { value: "service", label: "Service" }
+                        { value: "service", label: "Service" },
                       ].map((option) => (
-                        <label key={option.value} className="flex items-center cursor-pointer group">
+                        <label
+                          key={option.value}
+                          className="flex items-center cursor-pointer group"
+                        >
                           <input
                             className="w-4 h-4 text-brand-blue border-gray-300 rounded focus:ring-blue-500"
                             type="radio"
                             name="type"
                             value={option.value}
-                            onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+                            onChange={(e) =>
+                              handleFilterChange(e.target.name, e.target.value)
+                            }
                             checked={filters.type === option.value}
                           />
                           <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">
@@ -281,7 +293,9 @@ const Search = () => {
                         <select
                           name="venuetype"
                           value={filters.venuetype}
-                          onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+                          onChange={(e) =>
+                            handleFilterChange(e.target.name, e.target.value)
+                          }
                           className="w-full py-2.5 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 text-sm"
                         >
                           <option value="">All venue types</option>
@@ -303,7 +317,9 @@ const Search = () => {
                             name="capacity"
                             value={filters.capacity}
                             type="range"
-                            onChange={(e) => handleFilterChange(e.target.name, e.target.value)}
+                            onChange={(e) =>
+                              handleFilterChange(e.target.name, e.target.value)
+                            }
                             min="100"
                             max="1000"
                             step="100"
@@ -333,7 +349,9 @@ const Search = () => {
                         type="checkbox"
                         name="offer"
                         checked={filters.offer}
-                        onChange={(e) => handleFilterChange(e.target.name, e.target.checked)}
+                        onChange={(e) =>
+                          handleFilterChange(e.target.name, e.target.checked)
+                        }
                       />
                       <span className="ml-3 text-sm text-gray-700 group-hover:text-gray-900">
                         Available Offers
@@ -358,10 +376,12 @@ const Search = () => {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col md:overflow-y-auto md:h-screen">
               {loading ? (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="min-h-screen flex items-center justify-center">
                   <div className="text-center">
-                    <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-600">Searching listings...</p>
+                    <Loading />
+                    <p className="font-heading text-slate-900 text-lg sm:text-2xl mt-4">
+                      Loading...
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -376,12 +396,14 @@ const Search = () => {
                               Search Results
                             </h1>
                             <p className="text-sm text-gray-600 mt-1">
-                              Showing {listings.length} of {pagination.totalItems} listings
+                              Showing {listings.length} of{" "}
+                              {pagination.totalItems} listings
                             </p>
                           </div>
                           {!isMobile && (
                             <div className="mt-2 md:mt-0 text-sm text-gray-600">
-                              Page {pagination.currentPage} of {pagination.totalPages}
+                              Page {pagination.currentPage} of{" "}
+                              {pagination.totalPages}
                             </div>
                           )}
                         </div>
@@ -401,34 +423,40 @@ const Search = () => {
                         <div className="px-6 py-4 md:px-8 md:py-6 bg-white border-t border-gray-200">
                           <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
                             <div className="text-sm text-gray-700">
-                              Showing page {pagination.currentPage} of {pagination.totalPages}
+                              Showing page {pagination.currentPage} of{" "}
+                              {pagination.totalPages}
                             </div>
                             <nav className="flex items-center space-x-1">
                               {/* Previous Button */}
                               <button
                                 onClick={handlePreviousPage}
-                                disabled={pagination.currentPage <= 1 || loading}
-                                className={`p-2 rounded-md ${pagination.currentPage <= 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+                                disabled={
+                                  pagination.currentPage <= 1 || loading
+                                }
+                                className={`p-2 rounded-md ${pagination.currentPage <= 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"}`}
                               >
                                 <FaAngleLeft className="w-5 h-5" />
                               </button>
-                              
+
                               {/* Page Numbers */}
                               {getPageNumbers().map((page) => (
                                 <button
                                   key={page}
                                   onClick={() => handlePageSelect(page)}
-                                  className={`w-10 h-10 flex items-center justify-center rounded-md text-sm font-medium ${pagination.currentPage === page ? 'bg-brand-blue text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                                  className={`w-10 h-10 flex items-center justify-center rounded-md text-sm font-medium ${pagination.currentPage === page ? "bg-brand-blue text-white" : "text-gray-700 hover:bg-gray-100"}`}
                                 >
                                   {page}
                                 </button>
                               ))}
-                              
+
                               {/* Next Button */}
                               <button
                                 onClick={handleNextPage}
-                                disabled={pagination.currentPage >= pagination.totalPages || loading}
-                                className={`p-2 rounded-md ${pagination.currentPage >= pagination.totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+                                disabled={
+                                  pagination.currentPage >=
+                                    pagination.totalPages || loading
+                                }
+                                className={`p-2 rounded-md ${pagination.currentPage >= pagination.totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"}`}
                               >
                                 <FaAngleRight className="w-5 h-5" />
                               </button>
@@ -447,7 +475,8 @@ const Search = () => {
                           No results found
                         </h3>
                         <p className="text-gray-500 mb-6">
-                          Try adjusting your search or filters to find what you're looking for.
+                          Try adjusting your search or filters to find what
+                          you're looking for.
                         </p>
                         <button
                           onClick={clearSearch}

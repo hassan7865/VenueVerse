@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   FaArrowLeft,
@@ -14,6 +14,8 @@ import Loading from "../Components/Loading";
 import UserProfile from "../../UserProfile";
 import api from "../lib/Url";
 import ReviewComponent from "../Components/Reviews";
+import MediaViewer from "../Components/MediaViewer";
+import { CartContext } from "../context/cart";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -23,10 +25,7 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const [reviews, setreviews] = useState([]);
   const [product, setProduct] = useState(null);
-
-  const addToCart = (product, productId) => {
-    console.log("Added to cart:", product, productId);
-  };
+ 
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +74,8 @@ const ProductDetails = () => {
 
   const formatPrice = (amount) => `Rs ${amount.toLocaleString()}`;
 
+    const { addToCart } = useContext(CartContext);
+
   const getStockStatus = () => {
     if (stock === 0)
       return {
@@ -115,13 +116,16 @@ const ProductDetails = () => {
             {/* Image Section - Mobile first */}
             <div className="w-full lg:flex-1">
               {/* Main Image */}
-              <div className="relative aspect-square w-full sm:h-96 lg:h-[500px]">
+              <MediaViewer url={images[selectedImageIndex]?.url}>
+                 <div className="relative aspect-square w-full sm:h-96 lg:h-[500px]">
                 <img
                   className="w-full h-full object-cover rounded-xl sm:rounded-2xl shadow-md sm:shadow-lg"
                   src={images[selectedImageIndex]?.url || "/no-image.jpg"}
                   alt={images[selectedImageIndex]?.alt || name}
                 />
               </div>
+              </MediaViewer>
+             
 
               {/* Thumbnail Gallery */}
               {images.length > 1 && (

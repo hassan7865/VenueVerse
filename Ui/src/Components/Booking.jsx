@@ -9,8 +9,14 @@ import { BsPencilSquare } from "react-icons/bs";
 import { useForm, Controller } from "react-hook-form";
 import api from "../lib/Url";
 
-
-const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operationDays }) => {
+const BookingDialog = ({
+  isOpen,
+  closeModal,
+  id,
+  operationHours,
+  type,
+  operationDays,
+}) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState([]);
   const [users, setUsers] = useState([]);
@@ -43,7 +49,9 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
 
   // Check if selected day is operational
   const isOperationalDay = () => {
-    const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+    const dayName = selectedDate.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
     return operationDays?.includes(dayName);
   };
 
@@ -61,12 +69,12 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
   const updateTimeFieldsForDate = (newDate) => {
     const currentStartTime = watch("startTime");
     const currentEndTime = watch("endTime");
-    
+
     if (currentStartTime) {
       const newStartTime = combineDateAndTime(newDate, currentStartTime);
       setValue("startTime", newStartTime);
     }
-    
+
     if (currentEndTime) {
       const newEndTime = combineDateAndTime(newDate, currentEndTime);
       setValue("endTime", newEndTime);
@@ -124,12 +132,12 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
       // Ensure the start and end times have the correct date
       const startTime = combineDateAndTime(selectedDate, data.startTime);
       const endTime = combineDateAndTime(selectedDate, data.endTime);
-      
+
       const bookingData = {
         userId: data.user.value,
         type,
         venueId: type === "venue" ? id : undefined,
-        serviceId: type === 'service' ? id : undefined,
+        serviceId: type === "service" ? id : undefined,
         startTime,
         endTime,
         notes: data.notes,
@@ -158,11 +166,11 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
   const resetForm = () => {
     const now = new Date();
     const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-    
+
     // Set times to current selected date
     const startTime = combineDateAndTime(selectedDate, now);
     const endTime = combineDateAndTime(selectedDate, oneHourLater);
-    
+
     reset({
       user: null,
       startTime,
@@ -178,14 +186,14 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
   const handleEdit = (booking) => {
     setCurrentBooking(booking);
     setIsEditing(true);
-    
+
     const bookingDate = new Date(booking.startTime);
     const startTime = new Date(booking.startTime);
     const endTime = new Date(booking.endTime);
-    
+
     // Set the calendar date to match the booking date
     setSelectedDate(bookingDate);
-    
+
     setValue("user", {
       value: booking.user._id,
       label: `${booking.user.username} (${booking.user.email})`,
@@ -211,10 +219,13 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
     }
   };
 
-  // Format time for display
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
   };
 
   useEffect(() => {
@@ -237,10 +248,10 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
   const minTime = parseTime(operationHours.open);
   const maxTime =
     operationHours.close === "00:00"
-      ? new Date(0, 0, 1, 0, 0) 
+      ? new Date(0, 0, 1, 0, 0)
       : parseTime(operationHours.close);
 
-  const dayName = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
+  const dayName = selectedDate.toLocaleDateString("en-US", { weekday: "long" });
 
   return (
     <Transition appear show={isOpen} as={React.Fragment}>
@@ -385,7 +396,10 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                   {/* Right Column - Booking Form or Not Operational Message */}
                   <div className="w-full lg:w-1/2 p-4 sm:p-6">
                     {isOperationalDay() ? (
-                      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                      <form
+                        onSubmit={handleSubmit(onSubmit)}
+                        className="space-y-4"
+                      >
                         {/* User Selection */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -405,7 +419,11 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                                     searchUsers(inputValue);
                                   }
                                 }}
-                                placeholder={isSearchingUsers ? "Searching users..." : "Search by email..."}
+                                placeholder={
+                                  isSearchingUsers
+                                    ? "Searching users..."
+                                    : "Search by email..."
+                                }
                                 isClearable
                                 isLoading={isSearchingUsers}
                                 loadingMessage={() => "Searching users..."}
@@ -436,7 +454,10 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                                   selected={field.value}
                                   onChange={(time) => {
                                     // Combine selected date with the time
-                                    const combinedDateTime = combineDateAndTime(selectedDate, time);
+                                    const combinedDateTime = combineDateAndTime(
+                                      selectedDate,
+                                      time
+                                    );
                                     field.onChange(combinedDateTime);
                                   }}
                                   showTimeSelect
@@ -464,22 +485,25 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                             <Controller
                               name="endTime"
                               control={control}
-                              rules={{ 
+                              rules={{
                                 required: "End time is required",
-                                validate: value => {
+                                validate: (value) => {
                                   const startTime = watch("startTime");
                                   return (
-                                    value > startTime || 
+                                    value > startTime ||
                                     "End time must be after start time"
                                   );
-                                }
+                                },
                               }}
                               render={({ field }) => (
                                 <DatePicker
                                   selected={field.value}
                                   onChange={(time) => {
                                     // Combine selected date with the time
-                                    const combinedDateTime = combineDateAndTime(selectedDate, time);
+                                    const combinedDateTime = combineDateAndTime(
+                                      selectedDate,
+                                      time
+                                    );
                                     field.onChange(combinedDateTime);
                                   }}
                                   showTimeSelect
@@ -510,12 +534,12 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                           <Controller
                             name="price"
                             control={control}
-                            rules={{ 
+                            rules={{
                               required: "Price is required",
                               min: {
                                 value: 0,
-                                message: "Price must be a positive number"
-                              }
+                                message: "Price must be a positive number",
+                              },
                             }}
                             render={({ field }) => (
                               <input
@@ -577,7 +601,11 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                 {isEditing ? "Updating..." : "Creating..."}
                               </>
-                            ) : isEditing ? "Update Booking" : "Create Booking"}
+                            ) : isEditing ? (
+                              "Update Booking"
+                            ) : (
+                              "Create Booking"
+                            )}
                           </button>
                         </div>
                       </form>
@@ -590,7 +618,8 @@ const BookingDialog = ({ isOpen, closeModal, id, operationHours, type, operation
                             </div>
                             <div className="ml-3">
                               <p className="text-sm text-red-700">
-                                {dayName} is not an operational day. Please select a different date.
+                                {dayName} is not an operational day. Please
+                                select a different date.
                               </p>
                             </div>
                           </div>
