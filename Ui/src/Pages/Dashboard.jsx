@@ -10,6 +10,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import api from "../lib/Url";
 import OrdersTable from "../Components/OrdersTable";
 import Loading from "../Components/Loading";
+import { CiMoneyBill } from "react-icons/ci";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -71,13 +72,13 @@ const Dashboard = () => {
     {
       title: "Booking Revenue",
       value: formatCurrency(stats.bookingRevenue),
-      icon: <FiDollarSign className="w-5 h-5 text-green-500" />,
+      icon: <CiMoneyBill className="w-5 h-5 text-green-500" />,
       color: "bg-green-100",
     },
     {
       title: "Order Revenue",
       value: formatCurrency(stats.orderRevenue),
-      icon: <FiDollarSign className="w-5 h-5 text-orange-500" />,
+      icon: <CiMoneyBill className="w-5 h-5 text-orange-500" />,
       color: "bg-orange-100",
     },
     {

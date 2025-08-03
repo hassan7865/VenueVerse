@@ -1,10 +1,9 @@
 import React from 'react';
 import { Search, Plus, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ShopHero = () => {
-  const navigate = (path) => {
-    console.log(`Navigating to: ${path}`);
-  };
+   const navigate = useNavigate()
 
   return (
     <div className="relative min-h-screen flex items-center overflow-hidden">

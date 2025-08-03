@@ -127,17 +127,23 @@ router.post("/create", verifyToken, async (req, res, next) => {
     const venueName = postDoc.title || postDoc.name || "Unknown";
 
     // Generate invoice PDF
+   const formatForInvoice = (dateObj) => {
+      return DateTime.fromJSDate(dateObj, { zone: TIMEZONE }).toFormat('dd/MM/yyyy hh:mm a');
+    };
+
+    const currentDateTime = DateTime.now().setZone(TIMEZONE);
+
     const pdfBuffer = await generateInvoice({
       bookingId: saved._id.toString(),
       customerName: userDoc.username || "N/A",
       customerEmail: userDoc.email || "N/A",
       customerPhone: userDoc.phone || "N/A",
       venueName,
-      startTime: saved.startTime,
-      endTime: saved.endTime,
+      startTime: formatForInvoice(saved.startTime),
+      endTime: formatForInvoice(saved.endTime),
       totalPrice: saved.price,
+      bookingDate: currentDateTime.toFormat('dd/MM/yyyy hh:mm a'),
     });
-
     await sendEmail({
       to: userDoc.email,
       subject: "Venue Booking Confirmation",

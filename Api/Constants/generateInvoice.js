@@ -16,7 +16,7 @@ const generateInvoice = ({
   startTime,
   endTime,
   totalPrice,
-  bookingDate = new Date()
+  bookingDate
 }) => {
   return new Promise((resolve, reject) => {
     try {
@@ -89,7 +89,7 @@ const generateInvoice = ({
 
       doc.fillColor('black').fontSize(10).font('Helvetica')
          .text(`#${bookingId}`, boxX + 15, invoiceBoxY + 35)
-         .text(bookingDate.toLocaleDateString(), boxX + 15, invoiceBoxY + 65);
+         .text(bookingDate, boxX + 15, invoiceBoxY + 65);
 
       currentY += boxHeight + 30;
 
