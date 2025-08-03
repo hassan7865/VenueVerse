@@ -21,26 +21,32 @@ route.post("/save", verifyToken, async (req, res, next) => {
 
 route.get("/count", verifyToken, async (req, res, next) => {
   try {
-    const counts = await post.aggregate([
-      {
-        $group: {
-          _id: "$type",
-          count: { $sum: 1 },
+    const [postCounts, userCount] = await Promise.all([
+      post.aggregate([
+        {
+          $group: {
+            _id: "$type",
+            count: { $sum: 1 },
+          },
         },
-      },
+      ]),
+      User.countDocuments()
     ]);
 
-    
-    const formatted = counts.reduce((acc, item) => {
+    const formattedPostCounts = postCounts.reduce((acc, item) => {
       acc[item._id] = item.count;
       return acc;
     }, {});
 
-    return res.status(200).json(formatted);
+    return res.status(200).json({
+      posts: formattedPostCounts,
+      users: userCount,
+    });
   } catch (err) {
     next(err);
   }
 });
+
 
 route.get("/:id", async (req, res, next) => {
   try {

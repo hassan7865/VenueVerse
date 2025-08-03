@@ -64,7 +64,7 @@ const Home = () => {
               
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-light text-gray-900">500+</div>
+                  <div className="text-3xl font-light text-gray-900">{count?.users}+</div>
                   <div className="text-sm text-gray-600">Verified Providers</div>
                 </div>
                 <div className="text-center">
@@ -151,11 +151,11 @@ const Home = () => {
               
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-light text-gray-900">{count?.venue}+</div>
+                  <div className="text-3xl font-light text-gray-900">{count?.posts.venue}+</div>
                   <div className="text-sm text-gray-600">Unique Venues</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-light text-gray-900">{count?.service}+</div>
+                  <div className="text-3xl font-light text-gray-900">{count?.posts.service}+</div>
                   <div className="text-sm text-gray-600">Professional Services</div>
                 </div>
               </div>
