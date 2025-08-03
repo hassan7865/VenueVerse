@@ -69,29 +69,7 @@ const Footer = () => {
               </div>
             </div>
 
-            <div>
-              <h3 className="font-semibold text-white mb-3">Support</h3>
-              <div className="space-y-2">
-                <Link
-                  to="/help"
-                  className="block text-slate-300 hover:text-white text-sm transition-colors duration-200"
-                >
-                  Help Center
-                </Link>
-                <Link
-                  to="/privacy"
-                  className="block text-slate-300 hover:text-white text-sm transition-colors duration-200"
-                >
-                  Privacy Policy
-                </Link>
-                <Link
-                  to="/terms"
-                  className="block text-slate-300 hover:text-white text-sm transition-colors duration-200"
-                >
-                  Terms of Service
-                </Link>
-              </div>
-            </div>
+      
           </div>
 
           {/* Social Links */}
@@ -99,7 +77,7 @@ const Footer = () => {
             <h3 className="font-semibold text-white">Connect With Us</h3>
             <div className="flex gap-3">
               <a
-                href="https://facebook.com/biplobhasan.emon"
+                href="#"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
