@@ -49,22 +49,22 @@ const Footer = () => {
                   Home
                 </Link>
                 <Link
-                  to="/venues"
+                  to="/search"
                   className="block text-slate-300 hover:text-white text-sm transition-colors duration-200"
                 >
                   Venues
                 </Link>
                 <Link
-                  to="/about"
+                  to="/search"
                   className="block text-slate-300 hover:text-white text-sm transition-colors duration-200"
                 >
-                  About
+                  Services
                 </Link>
                 <Link
-                  to="/contact"
+                  to="/search_shop"
                   className="block text-slate-300 hover:text-white text-sm transition-colors duration-200"
                 >
-                  Contact
+                  Shop
                 </Link>
               </div>
             </div>
