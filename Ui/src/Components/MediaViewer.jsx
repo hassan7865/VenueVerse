@@ -5,7 +5,8 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-const MediaViewer = ({ urls, children, startIndex = 0 }) => {
+const MediaViewer = ({ urls, children, startIndex = 0 ,type}) => {
+  console.log(urls)
   const [isOpen, setIsOpen] = useState(false);
   const sliderRef = useRef(null);
 
@@ -132,9 +133,9 @@ const MediaViewer = ({ urls, children, startIndex = 0 }) => {
                       key={index}
                       className="flex justify-center items-center"
                     >
-                      {isVideo(url.path) ? (
+                      {isVideo(type == "product" ? url.url :url.path) ? (
                         <video
-                          src={url.path}
+                          src={type == "product" ? url.url :url.path}
                           autoPlay
                           muted
                           controls={false}
@@ -142,9 +143,9 @@ const MediaViewer = ({ urls, children, startIndex = 0 }) => {
                           playsInline
                           className="w-full h-auto max-h-[80vh] object-contain rounded-md"
                         />
-                      ) : isImage(url.path) ? (
+                      ) : isImage(type == "product" ? url.url :url.path) ? (
                         <img
-                          src={url.path}
+                          src={type == "product" ? url.url :url.path}
                           alt={`Media ${index + 1}`}
                           className="w-full h-auto max-h-[80vh] object-contain rounded-md"
                         />

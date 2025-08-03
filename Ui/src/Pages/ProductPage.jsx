@@ -72,6 +72,8 @@ const ProductDetails = () => {
     user = {},
   } = product;
 
+  console.log(images)
+
   const formatPrice = (amount) => `Rs ${amount.toLocaleString()}`;
 
     const { addToCart } = useContext(CartContext);
@@ -116,7 +118,7 @@ const ProductDetails = () => {
             {/* Image Section - Mobile first */}
             <div className="w-full lg:flex-1">
               {/* Main Image */}
-              <MediaViewer url={images[selectedImageIndex]?.url}>
+              <MediaViewer urls={images} startIndex={selectedImageIndex} type="product" >
                  <div className="relative aspect-square w-full sm:h-96 lg:h-[500px]">
                 <img
                   className="w-full h-full object-cover rounded-xl sm:rounded-2xl shadow-md sm:shadow-lg"
