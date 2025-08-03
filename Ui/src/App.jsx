@@ -26,6 +26,7 @@ import CreateDecorItem from "./Pages/CreateShopItem";
 import UpdateDecorItem from "./Pages/UpdateShopItem";
 import PrivateRoute from "./Components/PrivateRoute";
 import MyListing from "./Pages/MyListing";
+import ScrollToTop from "./Components/ScrollToTop";
 
 // Move this outside the component to avoid reinitializing
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -33,6 +34,7 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 function App() {
   return (
     <BrowserRouter>
+     <ScrollToTop />
       <Header />
 
       <Routes>

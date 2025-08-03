@@ -5,10 +5,19 @@ import ServiceListing from "../Components/ServiceListing";
 import { FiArrowRight, FiSearch, FiPlusCircle } from "react-icons/fi";
 import VenueHero from "../Components/Hero";
 import FeedBack from "../Components/FeedBack";
+import { useEffect, useState } from "react";
+import api from "../lib/Url";
 
 const Home = () => {
   const navigate = useNavigate();
-
+  const [count,setcount] = useState()
+  const fetchCount = async()=>{
+    const res = await api.get("/post/count")
+    setcount(res.data)
+  }
+  useEffect(()=>{
+    fetchCount()
+  },[])
   return (
     <div className="font-sans antialiased text-gray-900 bg-white">
       {/* Professional Hero Section */}
@@ -142,12 +151,12 @@ const Home = () => {
               
               <div className="grid grid-cols-2 gap-6">
                 <div className="text-center">
-                  <div className="text-3xl font-light text-gray-900">1000+</div>
+                  <div className="text-3xl font-light text-gray-900">{count?.venue}+</div>
                   <div className="text-sm text-gray-600">Unique Venues</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-light text-gray-900">50+</div>
-                  <div className="text-sm text-gray-600">Cities Covered</div>
+                  <div className="text-3xl font-light text-gray-900">{count?.service}+</div>
+                  <div className="text-sm text-gray-600">Professional Services</div>
                 </div>
               </div>
               

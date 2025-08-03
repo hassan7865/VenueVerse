@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
+import toast from 'react-hot-toast';
 
 export const CartContext = createContext();
 
@@ -25,8 +26,48 @@ export const CartProvider = ({ children }) => {
         item._id === id ? { ...item, amount: item.amount + 1 } : item
       );
       setCart(newCart);
+      
+      // Professional toast for quantity update
+      toast.success(`${product.name || 'Product'} quantity updated`, {
+        duration: 2000,
+        position: 'top-right',
+        style: {
+          background: '#ffffff',
+          color: '#1f2937',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        },
+        iconTheme: {
+          primary: '#059669',
+          secondary: '#ffffff',
+        },
+      });
     } else {
       setCart([...cart, newItem]);
+      
+      // Professional toast for new item
+      toast.success(`${product.name || 'Product'} added to cart`, {
+        duration: 2000,
+        position: 'top-right',
+        style: {
+          background: '#ffffff',
+          color: '#1f2937',
+          border: '1px solid #e5e7eb',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          fontSize: '14px',
+          fontWeight: '500',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        },
+        iconTheme: {
+          primary: '#059669',
+          secondary: '#ffffff',
+        },
+      });
     }
   };
 
@@ -59,7 +100,10 @@ export const CartProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const total = cart.reduce((acc, item) => acc + item.price * item.amount, 0);
+    const total = cart.reduce((acc, item) => {
+      const price = item.offer && item.discountPrice ? item.discountPrice : item.price;
+      return acc + price * item.amount;
+    }, 0);
     setTotal(total);
   }, [cart]);
 

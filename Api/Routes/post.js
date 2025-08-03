@@ -18,6 +18,30 @@ route.post("/save", verifyToken, async (req, res, next) => {
   }
 });
 
+
+route.get("/count", verifyToken, async (req, res, next) => {
+  try {
+    const counts = await post.aggregate([
+      {
+        $group: {
+          _id: "$type",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    
+    const formatted = counts.reduce((acc, item) => {
+      acc[item._id] = item.count;
+      return acc;
+    }, {});
+
+    return res.status(200).json(formatted);
+  } catch (err) {
+    next(err);
+  }
+});
+
 route.get("/:id", async (req, res, next) => {
   try {
     const getPost = await post.findById(req.params.id);
@@ -70,6 +94,9 @@ route.delete("/:id", verifyToken, async (req, res, next) => {
     next(err);
   }
 });
+
+
+
 
 route.get("/", async (req, res, next) => {
   try {

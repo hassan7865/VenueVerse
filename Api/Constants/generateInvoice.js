@@ -32,6 +32,11 @@ const generateInvoice = ({
       const lightGray = '#F8F9FA';
       const darkGray = '#6C757D';
 
+      // Page dimensions
+      const pageWidth = 595; // A4 width in points
+      const margin = 50;
+      const contentWidth = pageWidth - (margin * 2);
+
       // Helpers
       const drawLine = (sx, sy, ex, ey, color = '#E9ECEF', width = 1) => {
         doc.strokeColor(color).lineWidth(width)
@@ -54,6 +59,7 @@ const generateInvoice = ({
         console.warn('Could not load logo:', e);
       }
 
+      // Company info
       doc.fillColor(primaryColor).fontSize(24).font('Helvetica-Bold')
          .text('VENUE VERSE', 130, currentY);
       doc.fillColor(darkGray).fontSize(10).font('Helvetica')
@@ -61,106 +67,181 @@ const generateInvoice = ({
          .text('Email: venueventure25@gmail.com', 130, currentY + 38)
          .text('Phone: +92-321-1234567', 130, currentY + 51);
 
+      // Invoice title - right aligned
       doc.fillColor(primaryColor).fontSize(32).font('Helvetica-Bold')
          .text('INVOICE', 400, currentY, { align: 'right' });
 
-      currentY += 80;
+      currentY += 100;
 
-      // --- Invoice Details Box (FIXED) ---
+      // --- Invoice Details Box (IMPROVED) ---
       const invoiceBoxY = currentY;
-      const boxWidth = 195;
-      const boxHeight = 80; // Increased height to accommodate both lines properly
+      const boxWidth = 200;
+      const boxHeight = 90;
+      const boxX = pageWidth - margin - boxWidth;
       
-      doc.rect(350, invoiceBoxY, boxWidth, boxHeight).fillColor(lightGray).fill();
-      doc.strokeColor('#E9ECEF').stroke();
+      doc.rect(boxX, invoiceBoxY, boxWidth, boxHeight).fillColor(lightGray).fill();
+      doc.strokeColor('#E9ECEF').lineWidth(1).stroke();
 
-      // Left-aligned labels
+      // Invoice details with better spacing
       doc.fillColor(primaryColor).fontSize(10).font('Helvetica-Bold')
-         .text('INVOICE NUMBER:', 360, invoiceBoxY + 15)
-         .text('BOOKING DATE:', 360, invoiceBoxY + 40);
+         .text('INVOICE NUMBER:', boxX + 15, invoiceBoxY + 20)
+         .text('BOOKING DATE:', boxX + 15, invoiceBoxY + 50);
 
-      // Right-aligned values with proper positioning
-      const valueX = 350 + boxWidth - 10; // 10px margin from right edge
       doc.fillColor('black').fontSize(10).font('Helvetica')
-         .text(`#${bookingId}`, valueX - 80, invoiceBoxY + 15, { align: 'right', width: 80 })
-         .text(bookingDate.toLocaleDateString(), valueX - 80, invoiceBoxY + 40, { align: 'right', width: 80 });
+         .text(`#${bookingId}`, boxX + 15, invoiceBoxY + 35)
+         .text(bookingDate.toLocaleDateString(), boxX + 15, invoiceBoxY + 65);
 
-      currentY += boxHeight + 20; // Adjust spacing after the box
+      currentY += boxHeight + 30;
 
       // --- Bill To Section ---
       doc.fillColor(primaryColor).fontSize(12).font('Helvetica-Bold')
          .text('BILL TO:', 50, currentY);
-      currentY += 20;
+      currentY += 25;
+      
       doc.fillColor('black').fontSize(11).font('Helvetica-Bold')
          .text(customerName, 50, currentY);
+      currentY += 20;
+      
       doc.fontSize(10).font('Helvetica')
-         .text(customerEmail, 50, currentY + 15)
-         .text(customerPhone, 50, currentY + 28);
-
-      currentY += 60;
+         .text(customerEmail, 50, currentY);
+      currentY += 15;
+      
+      doc.text(customerPhone, 50, currentY);
+      currentY += 40;
 
       // --- Service Details Section ---
       doc.fillColor(primaryColor).fontSize(12).font('Helvetica-Bold')
          .text('SERVICE DETAILS:', 50, currentY);
-      currentY += 25;
+      currentY += 30;
 
-      // Table header row
-      const tableY = currentY;
-      const headerHeight = 30;
-      doc.rect(50, tableY, 495, headerHeight).fillColor(primaryColor).fill();
-      doc.fillColor('white').fontSize(10).font('Helvetica-Bold')
-         .text('DESCRIPTION', 60, tableY + 10)
-         .text('VENUE', 200, tableY + 10)
-         .text('DURATION', 320, tableY + 10)
-         .text('AMOUNT', 450, tableY + 10);
+      // Table setup with proper column widths
+      const tableX = 50;
+      const tableWidth = contentWidth;
+      const col1Width = 180;  // Description
+      const col2Width = 140;  // Venue
+      const col3Width = 120;  // Duration
+      const col4Width = 95;   // Amount
+
+      // Table header
+      const headerHeight = 35;
+      doc.rect(tableX, currentY, tableWidth, headerHeight).fillColor(primaryColor).fill();
+      
+      doc.fillColor('white').fontSize(11).font('Helvetica-Bold')
+         .text('DESCRIPTION', tableX + 10, currentY + 12)
+         .text('VENUE', tableX + col1Width + 10, currentY + 12)
+         .text('DURATION', tableX + col1Width + col2Width + 10, currentY + 12)
+         .text('AMOUNT', tableX + col1Width + col2Width + col3Width + 10, currentY + 12);
 
       currentY += headerHeight;
 
-      // Booking row
-      doc.rect(50, currentY, 495, 50).fillColor('white').stroke();
-      doc.fillColor('black').fontSize(9).font('Helvetica')
-         .text('Venue Booking Service', 60, currentY + 10)
-         .text('Premium venue rental', 60, currentY + 22)
-         .text(venueName, 200, currentY + 10, { width: 110 });
+      // Booking details row
+      const rowHeight = 70;
+      doc.rect(tableX, currentY, tableWidth, rowHeight).fillColor('white').fill();
+      doc.strokeColor('#E9ECEF').lineWidth(0.5).stroke();
 
+      // Description column
+      doc.fillColor('black').fontSize(10).font('Helvetica-Bold')
+         .text('Venue Booking Service', tableX + 10, currentY + 15);
+      doc.fontSize(9).font('Helvetica')
+         .text('Premium venue rental service', tableX + 10, currentY + 30);
+
+      // Venue column
+      doc.fontSize(10).font('Helvetica')
+         .text(venueName, tableX + col1Width + 10, currentY + 15, { 
+           width: col2Width - 20, 
+           ellipsis: true 
+         });
+
+      // Duration column
       const duration = Math.ceil((new Date(endTime) - new Date(startTime)) / (1000 * 60 * 60));
-      doc.text(`${duration} hours`, 320, currentY + 10)
-         .text(`${new Date(startTime).toLocaleDateString()}`, 320, currentY + 22)
-         .text(`${new Date(startTime).toLocaleTimeString()} - ${new Date(endTime).toLocaleTimeString()}`, 320, currentY + 34);
+      doc.text(`${duration} hours`, tableX + col1Width + col2Width + 10, currentY + 15);
+      doc.fontSize(9)
+         .text(`${new Date(startTime).toLocaleDateString()}`, tableX + col1Width + col2Width + 10, currentY + 30);
+      doc.text(`${new Date(startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${new Date(endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`, 
+               tableX + col1Width + col2Width + 10, currentY + 45);
 
-      doc.text(`Rs ${totalPrice.toFixed(2)}`, 450, currentY + 10, { align: 'right', width: 85 });
+      // Amount column - properly aligned
+      doc.fontSize(12).font('Helvetica-Bold')
+         .text(`Rs ${totalPrice.toLocaleString()}`, tableX + col1Width + col2Width + col3Width + 10, currentY + 20, {
+           width: col4Width - 20,
+           align: 'right'
+         });
 
-      currentY += 50 + 20;
+      currentY += rowHeight + 30;
 
-      // --- Summary Section ---
-      const sumX = 350, sumW = 195;
-      drawLine(sumX, currentY, sumX + sumW, currentY, primaryColor, 2);
-      currentY += 10;
+      // --- Summary Section (FIXED) ---
+      const summaryX = pageWidth - margin - 250;
+      const summaryWidth = 250;
 
-      doc.rect(sumX, currentY, sumW, 30).fillColor(primaryColor).fill();
-      doc.fillColor('white').fontSize(12).font('Helvetica-Bold')
-         .text('TOTAL:', sumX + 10, currentY + 8)
-         .text(`Rs ${totalPrice.toFixed(2)}`, sumX + sumW - 50, currentY + 8, { align: 'right', width: 50 });
-
-      currentY += 50;
-
-      // --- Terms & Footer ---
-      doc.fillColor(primaryColor).fontSize(11).font('Helvetica-Bold')
-         .text('PAYMENT TERMS & CONDITIONS:', 50, currentY);
-      currentY += 20;
-      doc.fillColor('black').fontSize(9).font('Helvetica')
-         .text('• Payment is due within 30 days of invoice date', 50, currentY)
-         .text('• Late payments may incur additional charges', 50, currentY + 12)
-         .text('• Booking confirmation is subject to venue availability', 50, currentY + 24)
-         .text('• Cancellation policy applies as per terms of service', 50, currentY + 36);
-
-      currentY += 60;
-      drawLine(50, currentY, 545, currentY, '#E9ECEF');
+      // Subtotal line
+      drawLine(summaryX, currentY, summaryX + summaryWidth, currentY, '#E9ECEF', 1);
       currentY += 15;
 
-      doc.fillColor(darkGray).fontSize(8).font('Helvetica')
-         .text('Thank you for choosing Venue Verse!', 50, currentY, { align: 'center', width: 495 })
-         .text('Contact: venueventure25@gmail.com | +92‑321‑1234567', 50, currentY + 12, { align: 'center', width: 495 });
+      // Subtotal
+      doc.fillColor('black').fontSize(11).font('Helvetica')
+         .text('Subtotal:', summaryX, currentY);
+      doc.text(`Rs ${totalPrice.toLocaleString()}`, summaryX, currentY, {
+        width: summaryWidth - 10,
+        align: 'right'
+      });
+      currentY += 20;
+
+      // Tax (if applicable)
+      doc.text('Tax (0%):', summaryX, currentY);
+      doc.text('Rs 0.00', summaryX, currentY, {
+        width: summaryWidth - 10,
+        align: 'right'
+      });
+      currentY += 25;
+
+      // Total section with better styling
+      doc.rect(summaryX, currentY, summaryWidth, 40).fillColor(primaryColor).fill();
+      
+      doc.fillColor('white').fontSize(14).font('Helvetica-Bold')
+         .text('TOTAL:', summaryX + 15, currentY + 12);
+      
+      doc.text(`Rs ${totalPrice.toLocaleString()}`, summaryX + 15, currentY + 12, {
+        width: summaryWidth - 30,
+        align: 'right'
+      });
+
+      currentY += 70;
+
+      // --- Terms & Footer ---
+      doc.fillColor(primaryColor).fontSize(12).font('Helvetica-Bold')
+         .text('PAYMENT TERMS & CONDITIONS:', 50, currentY);
+      currentY += 25;
+
+      const terms = [
+        '• Payment is due within 30 days of invoice date',
+        '• Late payments may incur additional charges',
+        '• Booking confirmation is subject to venue availability',
+        '• Cancellation policy applies as per terms of service'
+      ];
+
+      doc.fillColor('black').fontSize(10).font('Helvetica');
+      terms.forEach(term => {
+        doc.text(term, 50, currentY);
+        currentY += 15;
+      });
+
+      currentY += 30;
+
+      // Footer
+      drawLine(50, currentY, pageWidth - margin, currentY, '#E9ECEF');
+      currentY += 20;
+
+      doc.fillColor(darkGray).fontSize(9).font('Helvetica')
+         .text('Thank you for choosing Venue Verse!', 50, currentY, { 
+           align: 'center', 
+           width: contentWidth 
+         });
+      currentY += 15;
+      
+      doc.text('Contact: venueventure25@gmail.com | +92‑321‑1234567', 50, currentY, { 
+        align: 'center', 
+        width: contentWidth 
+      });
 
       doc.end();
     } catch (err) {

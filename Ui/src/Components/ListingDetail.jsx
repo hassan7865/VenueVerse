@@ -50,6 +50,7 @@ const ListingDetails = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBooking, setshowBooking] = useState(false);
+ 
 
   const {
     area,
@@ -69,12 +70,10 @@ const ListingDetails = ({
     imgUrl,
   } = listings;
 
-  console.log(imgUrl);
-
   function SamplePrevArrow({ onClick }) {
     return (
       <div
-        className="absolute top-1/2 left-4 z-10 -translate-y-1/2 p-2 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center cursor-pointer shadow-lg hover:bg-white transition-all"
+        className="absolute top-1/2 left-4 z-[20] -translate-y-1/2 p-2 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center cursor-pointer shadow-lg hover:bg-white transition-all"
         onClick={onClick}
       >
         <FiArrowLeft className="text-gray-700 text-lg" />
@@ -85,7 +84,7 @@ const ListingDetails = ({
   function SampleNextArrow({ onClick }) {
     return (
       <div
-        className="absolute top-1/2 right-4 z-10 -translate-y-1/2 p-2 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center cursor-pointer shadow-lg hover:bg-white transition-all"
+        className="absolute top-1/2 right-4 z-[20] -translate-y-1/2 p-2 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center cursor-pointer shadow-lg hover:bg-white transition-all"
         onClick={onClick}
       >
         <FiArrowRight className="text-gray-700 text-lg" />
@@ -122,50 +121,53 @@ const ListingDetails = ({
   return (
     <div className="bg-white">
       {/* Hero Section */}
+
       <div className="relative bg-white">
-        <Slider {...settings} className="z-[10]">
+        <Slider {...settings} className="z-[10] overflow-hidden">
           {imgUrl?.map((listing, index) => {
-            console.log(listing);
             const isVideo =
               listing.type?.startsWith("video") ||
               listing.path?.match(/\.(mp4|webm|mov)$/i);
 
             return (
-              <MediaViewer url={listing.path}>
-                <div
-                  key={index}
-                  className="relative h-[50vh] md:h-[70vh] w-full bg-white"
-                >
-                  {isVideo ? (
-                    <video
-                      src={listing.path}
-                      className="absolute inset-0 w-full h-full object-contain bg-no-repeat"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                    />
-                  ) : (
-                    <img
-                      src={listing.path}
-                      alt={`Listing ${index + 1}`}
-                      className="absolute inset-0 w-full h-full object-contain"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
-                </div>
-              </MediaViewer>
+              <div
+                key={index}
+                className="relative h-[40vh] sm:h-[50vh] md:h-[70vh] w-full bg-white"
+              >
+                <MediaViewer urls={imgUrl} startIndex={currentSlide}>
+                  <div className="absolute inset-0 w-full h-full cursor-pointer">
+                    {isVideo ? (
+                      <video
+                        src={listing.path}
+                        className="w-full h-full object-contain bg-no-repeat"
+                        autoPlay
+                        muted
+                        controls={false}
+                        loop
+                        playsInline
+                      />
+                    ) : (
+                      <img
+                        src={listing.path}
+                        alt={`Listing ${index + 1}`}
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+                  </div>
+                </MediaViewer>
+              </div>
             );
           })}
         </Slider>
 
         {/* Title overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-10">
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 md:p-8 z-10">
           <div className="container mx-auto max-w-7xl">
             <span className="inline-block py-1 px-3 bg-white/90 backdrop-blur-sm text-gray-800 rounded-full text-xs font-medium uppercase tracking-wide">
               {type}
             </span>
-            <h1 className="mt-3 text-2xl md:text-4xl font-bold text-white capitalize">
+            <h1 className="mt-3 text-xl sm:text-2xl md:text-4xl font-bold text-white capitalize">
               {title}
             </h1>
             {type === "venue" && (
