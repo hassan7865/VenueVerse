@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from "react-select";
 import toast from "react-hot-toast";
-import { TrashIcon, X, Loader2 } from "lucide-react";
+import { TrashIcon, X, Loader2, MailIcon, PhoneIcon } from "lucide-react";
 import { BsPencilSquare } from "react-icons/bs";
 import { useForm, Controller } from "react-hook-form";
 import api from "../lib/Url";
@@ -16,6 +16,7 @@ const BookingDialog = ({
   operationHours,
   type,
   operationDays,
+  price,
 }) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState([]);
@@ -40,7 +41,7 @@ const BookingDialog = ({
       startTime: new Date(),
       endTime: new Date(new Date().setHours(new Date().getHours() + 1)),
       notes: "",
-      price: 0,
+      price: price,
     },
   });
 
@@ -343,8 +344,13 @@ const BookingDialog = ({
                               >
                                 <div className="flex justify-between items-start gap-3">
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-gray-600 truncate mb-1">
+                                    <p className="text-sm text-gray-600 truncate mb-1 flex items-center gap-2">
+                                      <MailIcon className="h-4 w-4 text-gray-400" />
                                       {event.user.email}
+                                    </p>
+                                    <p className="text-sm text-gray-600 truncate mb-1 flex items-center gap-2">
+                                      <PhoneIcon className="h-4 w-4 text-gray-400" />
+                                      {event.user.phone}
                                     </p>
                                     <p className="text-sm font-semibold text-gray-900 mb-2">
                                       {formatTime(event.startTime)} -{" "}
@@ -356,6 +362,7 @@ const BookingDialog = ({
                                       </p>
                                     )}
                                   </div>
+
                                   <div className="flex space-x-2">
                                     <button
                                       onClick={() => handleEdit(event)}
@@ -462,7 +469,7 @@ const BookingDialog = ({
                                   }}
                                   showTimeSelect
                                   showTimeSelectOnly
-                                  timeIntervals={15}
+                                  timeIntervals={30}
                                   timeCaption="Time"
                                   minTime={minTime}
                                   maxTime={maxTime}

@@ -6,11 +6,16 @@ const post = require("../Models/Post.model");
 const to12Hour = require("../Helper/12Hr");
 const generateInvoice = require("../Constants/generateInvoice");
 const sendEmail = require("../Helper/email");
-const { bookingSuccessTemplate } = require("../Constants/emailbody");
+const {
+  bookingSuccessTemplate,
+  venueBookedByUserTemplate,
+} = require("../Constants/emailbody");
 const User = require("../Models/User.model");
 const router = express.Router();
 
-const  { DateTime } = require("luxon");
+const { DateTime } = require("luxon");
+
+const TIMEZONE = "Asia/Karachi";
 
 // Your route definition
 router.post("/create", verifyToken, async (req, res, next) => {
@@ -26,6 +31,7 @@ router.post("/create", verifyToken, async (req, res, next) => {
       price,
     } = req.body;
 
+    // Validation
     if (!type || !["venue", "service"].includes(type)) {
       return next(throwError(400, "Invalid or missing booking type."));
     }
@@ -40,8 +46,18 @@ router.post("/create", verifyToken, async (req, res, next) => {
       );
     }
 
+    if (!userId) {
+      return next(throwError(400, "userId is required."));
+    }
+
+    if (!price || price <= 0) {
+      return next(throwError(400, "Valid price is required."));
+    }
+
+    // Find the post (venue or service)
     const postId = type === "venue" ? venueId : serviceId;
-    const postDoc = await post.findOne({ _id: postId, type });
+    const postDoc = await post
+      .findOne({ _id: postId, type })
 
     if (!postDoc) {
       return next(throwError(404, `${type} not found.`));
@@ -52,16 +68,24 @@ router.post("/create", verifyToken, async (req, res, next) => {
       return next(throwError(500, "Operational hours not configured."));
     }
 
-    // Parse booking start and end times using Luxon in local timezone
-    const TIMEZONE = "Asia/Karachi"; // Change if needed
-    const start = DateTime.fromISO(startTime, { zone: TIMEZONE });
-    const end = DateTime.fromISO(endTime, { zone: TIMEZONE });
+    // Parse booking times
+    let start, end;
+    try {
+      start = DateTime.fromISO(startTime, { zone: TIMEZONE });
+      end = DateTime.fromISO(endTime, { zone: TIMEZONE });
+
+      if (!start.isValid || !end.isValid) {
+        throw new Error("Invalid date format");
+      }
+    } catch (error) {
+      return next(throwError(400, "Invalid date/time format. Use ISO format."));
+    }
 
     if (end <= start) {
       return next(throwError(400, "End time must be after start time."));
     }
 
-    // Parse operational hours into minutes since midnight
+    // Validate operational hours
     const toMinutes = (timeStr) => {
       const [h, m] = timeStr.split(":").map(Number);
       return h * 60 + m;
@@ -93,7 +117,7 @@ router.post("/create", verifyToken, async (req, res, next) => {
       );
     }
 
-    // Check for booking conflicts
+    // Check for conflicts
     const conflict = await Booking.findOne({
       type,
       ...(type === "venue" ? { venueId } : { serviceId }),
@@ -107,6 +131,13 @@ router.post("/create", verifyToken, async (req, res, next) => {
       );
     }
 
+    // Verify user exists
+    const userDoc = await User.findById(userId);
+    if (!userDoc) {
+      return next(throwError(404, "User not found."));
+    }
+
+    // Create booking
     const booking = new Booking({
       userId,
       type,
@@ -120,46 +151,122 @@ router.post("/create", verifyToken, async (req, res, next) => {
 
     const saved = await booking.save();
 
-    // Fetch user info for invoice
-    const userDoc = await User.findById(userId);
-    if (!userDoc) return next(throwError(404, "User not found."));
+    // Format dates for invoice
+    const formatForInvoice = (dateObj) => {
+      return DateTime.fromJSDate(dateObj, { zone: TIMEZONE }).toFormat(
+        "dd/MM/yyyy hh:mm a"
+      );
+    };
 
+    const currentDateTime = DateTime.now().setZone(TIMEZONE);
     const venueName = postDoc.title || postDoc.name || "Unknown";
 
-    // Generate invoice PDF
-   const formatForInvoice = (dateObj) => {
-      return DateTime.fromJSDate(dateObj, { zone: TIMEZONE }).toFormat('dd/MM/yyyy hh:mm a');
+    // Generate and send invoice (with error handling)
+    try {
+      const pdfBuffer = await generateInvoice({
+        bookingId: saved._id.toString(),
+        customerName: userDoc.username || "N/A",
+        customerEmail: userDoc.email || "N/A",
+        customerPhone: userDoc.phone || "N/A",
+        venueName,
+        startTime: formatForInvoice(saved.startTime),
+        endTime: formatForInvoice(saved.endTime),
+        totalPrice: saved.price,
+        bookingDate: currentDateTime.toFormat("dd/MM/yyyy hh:mm a"),
+      });
+
+      // Send confirmation email to customer
+      await sendEmail({
+        to: userDoc.email,
+        subject: `Booking Confirmation`,
+        html: bookingSuccessTemplate(userDoc.username, booking._id),
+        attachments: [
+          {
+            filename: `invoice-${booking._id}.pdf`,
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          },
+        ],
+      });
+
+      const postUser = await User.findById(postDoc.userId)
+      if(!postUser){
+        return next(throwError(404,"Owner not found"))
+      }
+
+      await sendEmail({
+        to: postUser.email,
+        subject: "Booking Notification",
+        html: venueBookedByUserTemplate(
+          userDoc.username,
+          postUser.username,
+          saved._id.toString(),
+          venueName,
+          formatForInvoice(saved.startTime),
+          formatForInvoice(saved.endTime),
+          saved.notes
+        ),
+      });
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError);
+      // Don't fail the booking creation due to email issues
+      // You might want to log this error or handle it differently
+    }
+
+    res.status(201).json({
+      booking: saved,
+      message: "Booking created successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/:id/invoice", async (req, res, next) => {
+  try {
+    const bookingId = req.params.id;
+
+    // 1. Fetch booking from DB
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return next(throwError(404, "Booking not found"));
+    }
+
+    // 2. Fetch user data
+    const userDoc = await User.findById(booking.userId);
+    if (!userDoc) {
+      return next(throwError(404, "User not found"));
+    }
+
+    const formatForInvoice = (dateObj) => {
+      return DateTime.fromJSDate(dateObj, { zone: TIMEZONE }).toFormat(
+        "dd/MM/yyyy hh:mm a"
+      );
     };
 
     const currentDateTime = DateTime.now().setZone(TIMEZONE);
 
     const pdfBuffer = await generateInvoice({
-      bookingId: saved._id.toString(),
+      bookingId: booking._id.toString(),
       customerName: userDoc.username || "N/A",
       customerEmail: userDoc.email || "N/A",
       customerPhone: userDoc.phone || "N/A",
-      venueName,
-      startTime: formatForInvoice(saved.startTime),
-      endTime: formatForInvoice(saved.endTime),
-      totalPrice: saved.price,
-      bookingDate: currentDateTime.toFormat('dd/MM/yyyy hh:mm a'),
-    });
-    await sendEmail({
-      to: userDoc.email,
-      subject: "Venue Booking Confirmation",
-      html: bookingSuccessTemplate(userDoc.username, booking._id),
-      attachments: [
-        {
-          filename: `invoice-${booking._id}.pdf`,
-          content: pdfBuffer,
-          contentType: "application/pdf",
-        },
-      ],
+      venueName: booking.venueName,
+      startTime: formatForInvoice(booking.startTime),
+      endTime: formatForInvoice(booking.endTime),
+      totalPrice: booking.price,
+      bookingDate: currentDateTime.toFormat("dd/MM/yyyy hh:mm a"),
     });
 
-    res.status(201).json({ booking: saved });
-  } catch (err) {
-    next(err);
+    // 4. Return PDF as a download
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="invoice-${booking._id}.pdf"`,
+    });
+
+    return res.send(pdfBuffer);
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -301,6 +408,50 @@ router.put("/:id", async (req, res, next) => {
     if (!updatedBooking) {
       return next(throwError(404, "Booking not found"));
     }
+
+    const userDoc = await User.findById(updatedBooking.userId);
+    if (!userDoc) return next(throwError(404, "User not found."));
+
+    const venueName = updatedBooking.title || updatedBooking.name || "Unknown";
+
+    // Generate invoice PDF
+    const formatForInvoice = (dateObj) => {
+      return DateTime.fromJSDate(dateObj, { zone: TIMEZONE }).toFormat(
+        "dd/MM/yyyy hh:mm a"
+      );
+    };
+
+    const currentDateTime = DateTime.now().setZone(TIMEZONE);
+
+    try {
+      const pdfBuffer = await generateInvoice({
+        bookingId: updatedBooking._id.toString(),
+        customerName: userDoc.username || "N/A",
+        customerEmail: userDoc.email || "N/A",
+        customerPhone: userDoc.phone || "N/A",
+        venueName,
+        startTime: formatForInvoice(updatedBooking.startTime),
+        endTime: formatForInvoice(updatedBooking.endTime),
+        totalPrice: updatedBooking.price,
+        bookingDate: currentDateTime.toFormat("dd/MM/yyyy hh:mm a"),
+      });
+      await sendEmail({
+        to: userDoc.email,
+        subject: "Venue Booking Confirmation",
+        html: bookingSuccessTemplate(
+          userDoc.username,
+          updatedBooking._id,
+          true
+        ),
+        attachments: [
+          {
+            filename: `invoice-${updatedBooking._id}.pdf`,
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          },
+        ],
+      });
+    } catch {}
 
     res.status(200).json(updatedBooking);
   } catch (err) {

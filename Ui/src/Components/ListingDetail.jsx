@@ -32,6 +32,8 @@ import { BookIcon } from "lucide-react";
 import BookingDialog from "./Booking";
 import { Link } from "react-router-dom";
 import MediaViewer from "./MediaViewer";
+import RequestBookingDialog from "./UserBookingRequest";
+import UserProfile from "../../UserProfile";
 
 const ListingDetails = ({
   listings,
@@ -50,7 +52,7 @@ const ListingDetails = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showBooking, setshowBooking] = useState(false);
- 
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
 
   const {
     area,
@@ -204,7 +206,7 @@ const ListingDetails = ({
                     </span>
                   )}
                   <div className="mt-1 text-xs text-gray-500 uppercase tracking-wide">
-                    {type === "venue" ? "per event" : "per month"}
+                   per event
                   </div>
                 </div>
               </div>
@@ -445,6 +447,7 @@ const ListingDetails = ({
                     View My Listings
                   </button>
 
+
                   <button
                     onClick={() => setshowBooking(true)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-150 text-sm font-medium"
@@ -452,8 +455,11 @@ const ListingDetails = ({
                     <BookIcon className="w-4 h-4" />
                     Booking
                   </button>
+
+                 
                 </div>
               ) : (
+                
                 <div className="space-y-3">
                   <button
                     onClick={handleUrlShare}
@@ -461,6 +467,13 @@ const ListingDetails = ({
                   >
                     <FiShare2 className="w-4 h-4" />
                     Share This Listing
+                  </button>
+                   <button
+                    onClick={() => setIsBookingDialogOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-150 text-sm font-medium"
+                  >
+                    <BookIcon className="w-4 h-4" />
+                    Booking Request
                   </button>
                 </div>
               )}
@@ -517,8 +530,17 @@ const ListingDetails = ({
         id={_id}
         operationHours={operationalHours}
         operationDays={operationalDays}
+        price={offer ? discountPrice : price}
         type={type}
       ></BookingDialog>
+
+      <RequestBookingDialog
+        price={offer ? discountPrice : price}
+        listingId={_id}
+        type={type}
+        isOpen={isBookingDialogOpen}
+        onClose={() => setIsBookingDialogOpen(false)}
+      />
     </div>
   );
 };

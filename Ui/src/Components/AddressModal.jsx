@@ -25,12 +25,14 @@ const ShippingAddressDialog = ({ isOpen, onClose, initialValues }) => {
     },
   });
 
+   
   const handleCheckout = async (shippingAddress) => {
     try {
+     
       const payload = cart.map((item) => ({
         id: item._id,
         name: item.name,
-        price: item.price,
+        price: item.offer ? item.discountPrice : item.price,
         quantity: item.amount || 1,
       }));
 
@@ -40,7 +42,7 @@ const ShippingAddressDialog = ({ isOpen, onClose, initialValues }) => {
       });
 
       const stripe = await loadStripe(
-       import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+        import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
       );
 
       const result = await stripe.redirectToCheckout({
