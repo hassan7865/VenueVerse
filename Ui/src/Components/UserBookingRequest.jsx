@@ -3,10 +3,10 @@ import { Dialog } from "@headlessui/react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { XCircle, ClipboardList, Clock, MapPin, Banknote } from "lucide-react";
-import api from "../lib/Url";
 import UserProfile from "../../UserProfile";
 import toast from "react-hot-toast";
 import Loading from "./Loading";
+import api from "../lib/Url";
 
 const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
   const [date, setDate] = useState(new Date());
@@ -16,8 +16,11 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
   const [bookedSlots, setBookedSlots] = useState([]);
   const [operationalDays, setOperationalDays] = useState([]);
   const [operationalHours, setOperationalHours] = useState({
-    start: 9,
-    end: 17,
+    start: 9, // hour (0-23)
+    startMinutes: 0,
+    end: 17, // hour (0-24)
+    endMinutes: 0,
+    spansMidnight: false
   });
   const [loading, setLoading] = useState(false);
   const [listing, setListing] = useState(null);
@@ -54,24 +57,30 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
             .filter((d) => d !== undefined) || [];
         setOperationalDays(convertedDays);
 
-        // Convert time strings to hours (e.g., "11:00" -> 11)
+        // Parse operational hours
         const parseTimeToHour = (timeStr) => {
           if (!timeStr) return null;
-          const [hours] = timeStr.split(":");
-          return parseInt(hours, 10);
+          const [hours, minutes] = timeStr.split(":").map(Number);
+          return { hours, minutes };
         };
 
-        const startHour = parseTimeToHour(operationHours?.open);
-        const endHour = parseTimeToHour(operationHours?.close);
+        const startTime = parseTimeToHour(operationHours?.open);
+        const endTime = parseTimeToHour(operationHours?.close);
+
+        // Determine if operational hours span midnight
+        let spansMidnight = false;
+        if (startTime && endTime) {
+          // If end time is earlier than start time in 24-hour format, it spans midnight
+          spansMidnight = endTime.hours < startTime.hours || 
+                         (endTime.hours === startTime.hours && endTime.minutes < startTime.minutes);
+        }
 
         setOperationalHours({
-          start: startHour !== null ? startHour : 9,
-          end:
-            endHour !== null
-              ? endHour === 23 && operationHours?.close === "23:59"
-                ? 24
-                : endHour + 1
-              : 17,
+          start: startTime?.hours ?? 9,
+          startMinutes: startTime?.minutes ?? 0,
+          end: endTime?.hours ?? 17,
+          endMinutes: endTime?.minutes ?? 0,
+          spansMidnight
         });
 
         const formattedBookedSlots =
@@ -108,51 +117,146 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
     return operationalDays.length === 0 || operationalDays.includes(day);
   };
 
-  const generateTimeOptions = () => {
-    const options = [];
-    for (
-      let hour = operationalHours.start;
-      hour < operationalHours.end;
-      hour++
-    ) {
-      for (let minute = 0; minute < 60; minute += 30) {
-        const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
-        const displayTime = new Date();
-        displayTime.setHours(hour, minute);
-        const displayStr = displayTime.toLocaleTimeString([], {
+const generateTimeOptions = () => {
+  const options = [];
+  const { start, startMinutes, end, endMinutes, spansMidnight } = operationalHours;
+  
+  // Convert all times to minutes since midnight for easier comparison
+  const startTotalMinutes = start * 60 + startMinutes;
+  const endTotalMinutes = end * 60 + endMinutes;
+  
+  // Handle normal operational hours (not spanning midnight)
+  if (!spansMidnight) {
+    for (let minutes = startTotalMinutes; minutes <= endTotalMinutes; minutes += 30) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+      const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+      
+      options.push({
+        value: timeStr,
+        display: new Date(0, 0, 0, hour, minute).toLocaleTimeString([], {
           hour: "numeric",
           minute: "2-digit",
           hour12: true,
-        });
-        options.push({ value: timeStr, display: displayStr });
-      }
+        }),
+        minutes: minutes
+      });
     }
-    return options;
-  };
+  } 
+  // Handle operational hours that span midnight
+  else {
+    // First part: from start time to midnight
+    for (let minutes = startTotalMinutes; minutes < 24 * 60; minutes += 30) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+      const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+      
+      options.push({
+        value: timeStr,
+        display: new Date(0, 0, 0, hour, minute).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        minutes: minutes
+      });
+    }
+    
+    // Second part: from midnight to end time
+    for (let minutes = 0; minutes <= endTotalMinutes; minutes += 30) {
+      const hour = Math.floor(minutes / 60);
+      const minute = minutes % 60;
+      const timeStr = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+      
+      options.push({
+        value: timeStr,
+        display: new Date(0, 0, 0, hour, minute).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        minutes: minutes + (24 * 60) // Add a day's worth of minutes for proper comparison
+      });
+    }
+  }
+  
+  return options;
+};
 
-  const isTimeSlotAvailable = (timeStr) => {
-    if (!timeStr) return true;
+const getMaxContinuousEndTime = (startTimeStr) => {
+  if (!startTimeStr) return null;
 
-    const [hours, minutes] = timeStr.split(":").map(Number);
-    const checkTime = new Date(date);
-    checkTime.setHours(hours, minutes, 0, 0);
+  const timeOptions = generateTimeOptions();
+  const startOption = timeOptions.find(opt => opt.value === startTimeStr);
+  if (!startOption) return null;
 
-    return !bookedSlots.some((booked) => {
-      const bookedTime = new Date(booked);
-      return bookedTime.getTime() === checkTime.getTime();
-    });
-  };
+  const startMinutes = startOption.minutes;
+  let lastAvailableTime = startTimeStr;
+
+  // Find and sort the next available time slots after the start time
+  const subsequentOptions = timeOptions
+    .filter(opt => opt.minutes > startMinutes && isTimeSlotAvailable(opt.value))
+    .sort((a, b) => a.minutes - b.minutes);
+
+  // Find the first gap in availability
+  for (let i = 0; i < subsequentOptions.length; i++) {
+    const current = subsequentOptions[i];
+    const expectedMinutes = startMinutes + ((i + 1) * 30);
+
+    if (current.minutes !== expectedMinutes) {
+      const prevOption = subsequentOptions[i - 1];
+      return prevOption ? prevOption.value : startTimeStr;
+    }
+
+    lastAvailableTime = current.value;
+  }
+
+  return lastAvailableTime;
+};
+
+
+
+const isTimeSlotAvailable = (timeStr) => {
+  if (!timeStr) return true;
+
+  const [hours, minutes] = timeStr.split(":").map(Number);
+  const checkTime = new Date(date);
+  checkTime.setHours(hours, minutes, 0, 0);
+
+  return !bookedSlots.some(booked => {
+    const bookedTime = new Date(booked);
+    return bookedTime.getTime() === checkTime.getTime();
+  });
+};
 
   const isRangeValid = () => {
     if (!startTime || !endTime) return false;
 
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
-
-    const startMinutes = startHour * 60 + startMinute;
-    const endMinutes = endHour * 60 + endMinute;
-
-    return endMinutes > startMinutes;
+    
+    const { spansMidnight } = operationalHours;
+    
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    
+    if (!spansMidnight) {
+      // Normal case - end must be after start
+      return endTotalMinutes > startTotalMinutes;
+    } else {
+      // Spans midnight case - more complex logic
+      if (startTotalMinutes >= operationalHours.start * 60 + operationalHours.startMinutes) {
+        // Started in first part (before midnight)
+        // Valid if end is after start (same day) OR end is before operational end (next day)
+        return endTotalMinutes > startTotalMinutes || 
+               endTotalMinutes <= operationalHours.end * 60 + operationalHours.endMinutes;
+      } else {
+        // Started in second part (after midnight)
+        // Must be after start and before operational end
+        return endTotalMinutes > startTotalMinutes && 
+               endTotalMinutes <= operationalHours.end * 60 + operationalHours.endMinutes;
+      }
+    }
   };
 
   const isRangeAvailable = () => {
@@ -160,24 +264,27 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
 
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
-
+    
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    
     // Check every 30-minute slot in the range
-    let currentHour = startHour;
-    let currentMinute = startMinute;
-
-    while (
-      currentHour < endHour ||
-      (currentHour === endHour && currentMinute < endMinute)
-    ) {
+    let currentMinutes = startTotalMinutes;
+    
+    while (currentMinutes < endTotalMinutes) {
+      const currentHour = Math.floor(currentMinutes / 60) % 24;
+      const currentMinute = currentMinutes % 60;
       const timeStr = `${currentHour.toString().padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+      
       if (!isTimeSlotAvailable(timeStr)) {
         return false;
       }
-
-      currentMinute += 30;
-      if (currentMinute >= 60) {
-        currentMinute = 0;
-        currentHour++;
+      
+      currentMinutes += 30;
+      
+      // Handle wrap-around at midnight
+      if (currentMinutes >= 24 * 60 && endTotalMinutes < startTotalMinutes) {
+        currentMinutes = 0;
       }
     }
 
@@ -197,8 +304,18 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
 
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
-    const durationMinutes =
-      endHour * 60 + endMinute - (startHour * 60 + startMinute);
+    
+    const { spansMidnight } = operationalHours;
+    
+    let startTotalMinutes = startHour * 60 + startMinute;
+    let endTotalMinutes = endHour * 60 + endMinute;
+    
+    // Handle duration calculation when range spans midnight
+    if (spansMidnight && endTotalMinutes < startTotalMinutes) {
+      endTotalMinutes += 24 * 60; // Add a day's worth of minutes
+    }
+    
+    const durationMinutes = endTotalMinutes - startTotalMinutes;
     const hours = Math.floor(durationMinutes / 60);
     const minutes = durationMinutes % 60;
 
@@ -216,6 +333,30 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
       hour12: true,
     });
   };
+
+const getEndTimeOptions = () => {
+  if (!startTime) return [];
+  
+  const timeOptions = generateTimeOptions();
+  const startOption = timeOptions.find(opt => opt.value === startTime);
+  if (!startOption) return [];
+
+  const maxEndTime = getMaxContinuousEndTime(startTime);
+  if (!maxEndTime) return [];
+
+  const maxEndOption = timeOptions.find(opt => opt.value === maxEndTime);
+  if (!maxEndOption) return [];
+
+  return timeOptions
+    .filter(option => {
+      return option.minutes > startOption.minutes && 
+             option.minutes <= maxEndOption.minutes;
+    })
+    .map(option => ({
+      value: option.value,
+      display: option.display
+    }));
+};
 
   const handleSubmit = async () => {
     if (!startTime || !endTime) {
@@ -245,6 +386,11 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
 
       const endDateTime = new Date(date);
       endDateTime.setHours(endHour, endMinute, 0, 0);
+      
+      // Handle case where end time is next day (only when operational hours span midnight)
+      if (operationalHours.spansMidnight && endHour < startHour) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
 
       await api.post("/booking/create", {
         userId: UserProfile.GetUserData()._id,
@@ -312,22 +458,6 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
     }
 
     return null;
-  };
-
-  const getEndTimeOptions = () => {
-    const options = generateTimeOptions();
-    if (!startTime) return options;
-
-    const [startHour, startMinute] = startTime.split(":").map(Number);
-    const startMinutes = startHour * 60 + startMinute;
-
-    return options.filter((option) => {
-      const [optionHour, optionMinute] = option.value.split(":").map(Number);
-      const optionMinutes = optionHour * 60 + optionMinute;
-      
-      // End time must be after start time AND the slot must be available
-      return optionMinutes > startMinutes && isTimeSlotAvailable(option.value);
-    });
   };
 
   const timeOptions = generateTimeOptions();
@@ -434,9 +564,7 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
                           value={startTime}
                           onChange={(e) => {
                             setStartTime(e.target.value);
-                            if (endTime && e.target.value >= endTime) {
-                              setEndTime("");
-                            }
+                            setEndTime(""); // Reset end time when start time changes
                           }}
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                         >
@@ -455,6 +583,19 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
                           ))}
                         </select>
                       </div>
+
+                      {/* Available Time Range Info */}
+                      {startTime && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-blue-700 text-sm">
+                            <span className="font-medium">Available until:</span>{" "}
+                            {formatTimeTo12Hour(getMaxContinuousEndTime(startTime))}
+                          </p>
+                          <p className="text-blue-600 text-xs mt-1">
+                            You can book any duration within this continuous available time range.
+                          </p>
+                        </div>
+                      )}
 
                       {/* End Time */}
                       <div className="space-y-2">
@@ -481,7 +622,7 @@ const RequestBookingDialog = ({ listingId, isOpen, onClose, type, price }) => {
                         )}
                         {startTime && endTimeOptions.length === 0 && (
                           <p className="text-xs text-red-500">
-                            No available end times after the selected start time
+                            No available time slots after the selected start time
                           </p>
                         )}
                       </div>

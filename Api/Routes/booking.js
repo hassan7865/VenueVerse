@@ -96,8 +96,27 @@ router.post("/create", verifyToken, async (req, res, next) => {
     const startMinutes = start.hour * 60 + start.minute;
     const endMinutes = end.hour * 60 + end.minute;
 
-    const isValidTime =
-      startMinutes >= openMinutes && endMinutes <= closeMinutes;
+   const isValidTime = (() => {
+  // Convert all times to minutes since midnight
+  const openMinutes = toMinutes(operationHours.open);
+  const closeMinutes = toMinutes(operationHours.close);
+  const startMinutes = start.hour * 60 + start.minute;
+  const endMinutes = end.hour * 60 + end.minute;
+
+  // Check if operational hours span midnight (close is earlier than open)
+  const spansMidnight = closeMinutes < openMinutes;
+
+  if (spansMidnight) {
+    // For midnight-spanning hours, valid if:
+    // 1. Start is after open time AND end is before midnight (same day), OR
+    // 2. Start is after midnight AND end is before close time (next day)
+    return (startMinutes >= openMinutes && endMinutes <= 24*60) || 
+           (startMinutes >= 0 && endMinutes <= closeMinutes);
+  } else {
+    // Normal case - both times must be within operational hours
+    return startMinutes >= openMinutes && endMinutes <= closeMinutes;
+  }
+})();
 
     const to12Hour = (timeStr) => {
       const [hour, minute] = timeStr.split(":").map(Number);

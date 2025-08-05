@@ -120,6 +120,10 @@ const ListingDetails = ({
       </div>
     ),
   };
+  const timeToMinutes = (timeStr) => {
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
   return (
     <div className="bg-white">
       {/* Hero Section */}
@@ -206,7 +210,7 @@ const ListingDetails = ({
                     </span>
                   )}
                   <div className="mt-1 text-xs text-gray-500 uppercase tracking-wide">
-                   per event
+                    per event
                   </div>
                 </div>
               </div>
@@ -371,18 +375,60 @@ const ListingDetails = ({
                     plugins={[timeGridPlugin, interactionPlugin]}
                     initialView="timeGridDay"
                     allDaySlot={false}
-                    slotMinTime={operationalHours?.open || "00:00"}
-                    slotMaxTime={
-                      operationalHours?.close === "00:00"
-                        ? "24:00"
-                        : operationalHours?.close
-                    }
+                    slotMinTime="00:00:00"
+                    slotMaxTime="24:00:00"
                     height="auto"
                     events={events}
                     headerToolbar={{
                       left: "prev,next today",
                       center: "title",
                       right: "",
+                    }}
+                    slotLabelDidMount={(info) => {
+                      const slotTime = info.date;
+                      const hour = slotTime.getHours();
+                      const minutes = slotTime.getMinutes();
+                      let currentMinutes = hour * 60 + minutes;
+
+                      const open = timeToMinutes(
+                        operationalHours?.open || "00:00"
+                      );
+                      let close = timeToMinutes(
+                        operationalHours?.close || "00:00"
+                      );
+
+                      // Adjust close time if it's overnight (e.g., 03:00 is less than 11:00)
+                      const isOvernight = close <= open;
+                      if (isOvernight) {
+                        if (currentMinutes < open) currentMinutes += 1440;
+                        close += 1440;
+                      }
+
+                      // Disable slot if not in operational range
+                      if (currentMinutes < open || currentMinutes >= close) {
+                        // Style the disabled slot
+                        info.el.style.backgroundColor = "#f3f4f6"; // light gray
+                        info.el.style.opacity = "0.5";
+                        info.el.style.pointerEvents = "none";
+                        info.el.style.border = "1px solid #e5e7eb";
+                        info.el.style.position = "relative";
+
+                        // Create and append the "Closed" label
+                        const label = document.createElement("div");
+                        label.innerText = "Closed";
+                        label.style.position = "absolute";
+                        label.style.top = "4px";
+                        label.style.right = "4px";
+                        label.style.fontSize = "10px";
+                        label.style.fontWeight = "600";
+                        label.style.color = "#9ca3af"; // tailwind gray-400
+                        label.style.backgroundColor = "#fff";
+                        label.style.padding = "2px 6px";
+                        label.style.borderRadius = "4px";
+                        label.style.boxShadow = "0 0 2px rgba(0,0,0,0.1)";
+
+                        info.el.appendChild(label);
+                      }
                     }}
                     selectable={false}
                     slotDuration="00:30:00"
@@ -447,7 +493,6 @@ const ListingDetails = ({
                     View My Listings
                   </button>
 
-
                   <button
                     onClick={() => setshowBooking(true)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-150 text-sm font-medium"
@@ -455,11 +500,8 @@ const ListingDetails = ({
                     <BookIcon className="w-4 h-4" />
                     Booking
                   </button>
-
-                 
                 </div>
               ) : (
-                
                 <div className="space-y-3">
                   <button
                     onClick={handleUrlShare}
@@ -468,7 +510,7 @@ const ListingDetails = ({
                     <FiShare2 className="w-4 h-4" />
                     Share This Listing
                   </button>
-                   <button
+                  <button
                     onClick={() => setIsBookingDialogOpen(true)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-150 text-sm font-medium"
                   >

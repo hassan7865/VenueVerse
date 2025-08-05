@@ -24,6 +24,7 @@ import api from "../lib/Url";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { FaMoneyBillWave } from "react-icons/fa";
+import DatePicker from "react-datepicker";
 
 const VenueTypes = [
   "Banquet Halls",
@@ -36,6 +37,8 @@ const VenueTypes = [
   "Restaurants and Cafes",
   "Bars and Lounges",
 ];
+
+
 
 const CreatePost = () => {
   const currentUser = UserProfile.GetUserData();
@@ -71,8 +74,28 @@ const CreatePost = () => {
     },
   });
 
+    const validateTimeRange = (openTime, closeTime) => {
+    if (!openTime || !closeTime) return true;
+
+    const openMinutes = timeToMinutes(openTime);
+    const closeMinutes = timeToMinutes(closeTime);
+
+    if (closeTime === "00:00") return true;
+
+    if (closeMinutes <= openMinutes) {
+      return closeMinutes !== openMinutes;
+    }
+
+    return closeMinutes > openMinutes;
+  };
   const watchType = watch("type");
   const watchOffer = watch("offer");
+
+    const timeToMinutes = (timeStr) => {
+    if (!timeStr) return null;
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
 
   const handleImageUpload = async (e) => {
     e.preventDefault();
@@ -552,64 +575,140 @@ const CreatePost = () => {
                     )}
                   </div>
 
-                  {/* Operation Hours */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Opening Time <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        {...register("operationHours.open", {
-                          required: "Opening time is required",
-                          validate: (value) => {
-                            const closeTime = watch("operationHours.close");
-                            if (closeTime && value >= closeTime) {
-                              return "Opening time must be before closing time";
-                            }
-                            return true;
-                          },
-                        })}
-                        type="time"
-                        className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
-                      />
-                      {errors.operationHours?.open && (
-                        <div className="flex items-center mt-2 text-red-600">
-                          <AlertCircle className="w-4 h-4 mr-2" />
-                          <span className="text-sm">
-                            {errors.operationHours.open.message}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Opening Time */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Opening Time <span className="text-red-500">*</span>
+                        </label>
+                        <Controller
+                          name="operationHours.open"
+                          control={control}
+                          rules={{
+                            required: "Opening time is required",
+                            validate: (value) => {
+                              const closeTime = watch("operationHours.close");
+                              if (!validateTimeRange(value, closeTime)) {
+                                return "Invalid time range";
+                              }
+                              return true;
+                            },
+                          }}
+                          render={({ field }) => (
+                            <DatePicker
+                              selected={
+                                field.value
+                                  ? timeStringToDate(field.value)
+                                  : null
+                              }
+                              onChange={(date) => {
+                                const formatted = date
+                                  .toTimeString()
+                                  .slice(0, 5); // "HH:mm"
+                                field.onChange(formatted);
+                              }}
+                              showTimeSelect
+                              showTimeSelectOnly
+                              timeIntervals={30}
+                              timeCaption="Time"
+                              dateFormat="h:mm aa"
+                              className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
+                            />
+                          )}
+                        />
+                        {errors.operationHours?.open && (
+                          <div className="flex items-center mt-2 text-red-600">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            <span className="text-sm">
+                              {errors.operationHours.open.message}
+                            </span>
+                          </div>
+                        )}
+                      </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Closing Time <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        {...register("operationHours.close", {
-                          required: "Closing time is required",
-                          validate: (value) => {
-                            const openTime = watch("operationHours.open");
-                            if (openTime && value <= openTime) {
-                              return "Closing time must be after opening time";
-                            }
-                            return true;
-                          },
-                        })}
-                        type="time"
-                        className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
-                      />
-                      {errors.operationHours?.close && (
-                        <div className="flex items-center mt-2 text-red-600">
-                          <AlertCircle className="w-4 h-4 mr-2" />
-                          <span className="text-sm">
-                            {errors.operationHours.close.message}
-                          </span>
-                        </div>
-                      )}
+                      {/* Closing Time */}
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Closing Time <span className="text-red-500">*</span>
+                        </label>
+                        <Controller
+                          name="operationHours.close"
+                          control={control}
+                          rules={{
+                            required: "Closing time is required",
+                            validate: (value) => {
+                              const openTime = watch("operationHours.open");
+                              if (!validateTimeRange(openTime, value)) {
+                                return "Invalid time range";
+                              }
+                              return true;
+                            },
+                          }}
+                          render={({ field }) => (
+                            <DatePicker
+                              selected={
+                                field.value
+                                  ? timeStringToDate(field.value)
+                                  : null
+                              }
+                              onChange={(date) => {
+                                const formatted = date
+                                  .toTimeString()
+                                  .slice(0, 5); // "HH:mm"
+                                field.onChange(formatted);
+                              }}
+                              showTimeSelect
+                              showTimeSelectOnly
+                              timeIntervals={30}
+                              timeCaption="Time"
+                              dateFormat="h:mm aa"
+                              className="w-full px-4 py-3 border border-slate-500 bg-white rounded-lg focus:ring-2 focus:ring-slate-900 transition-colors"
+                            />
+                          )}
+                        />
+                        {errors.operationHours?.close && (
+                          <div className="flex items-center mt-2 text-red-600">
+                            <AlertCircle className="w-4 h-4 mr-2" />
+                            <span className="text-sm">
+                              {errors.operationHours.close.message}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Optional Helper Text */}
+                        {(() => {
+                          const openTime = watch("operationHours.open");
+                          const closeTime = watch("operationHours.close");
+
+                          if (!openTime || !closeTime) return null;
+
+                          if (closeTime === "00:00") {
+                            return (
+                              <div className="flex items-center mt-2 text-blue-600">
+                                <span className="text-sm">
+                                  Open until midnight (next day)
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          const openMinutes = timeToMinutes(openTime);
+                          const closeMinutes = timeToMinutes(closeTime);
+
+                          if (closeMinutes < openMinutes) {
+                            return (
+                              <div className="flex items-center mt-2 text-blue-600">
+                                <span className="text-sm">
+                                  Overnight operation (closes next day)
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          return null;
+                        })()}
+                      </div>
                     </div>
-                  </div>
                 </div>
               </div>
 
