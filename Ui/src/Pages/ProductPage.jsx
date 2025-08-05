@@ -70,13 +70,25 @@ const ProductDetails = () => {
     category = "Uncategorized",
     stock = 0,
     user = {},
+    offer,
+    discountPrice
   } = product;
 
-  console.log(images)
+  console.log(product)
 
   const formatPrice = (amount) => `Rs ${amount.toLocaleString()}`;
 
-    const { addToCart } = useContext(CartContext);
+  // Determine if there's an active offer and which price to display
+  const hasOffer = offer && discountPrice && discountPrice < price;
+  const displayPrice = hasOffer ? discountPrice : price;
+  const originalPrice = hasOffer ? price : null;
+
+  // Calculate discount percentage if there's an offer
+  const discountPercentage = hasOffer 
+    ? Math.round(((price - discountPrice) / price) * 100) 
+    : 0;
+
+  const { addToCart } = useContext(CartContext);
 
   const getStockStatus = () => {
     if (stock === 0)
@@ -125,6 +137,12 @@ const ProductDetails = () => {
                   src={images[selectedImageIndex]?.url || "/no-image.jpg"}
                   alt={images[selectedImageIndex]?.alt || name}
                 />
+                {/* Discount Badge */}
+                {hasOffer && (
+                  <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs sm:text-sm font-bold shadow-lg">
+                    {discountPercentage}% OFF
+                  </div>
+                )}
               </div>
               </MediaViewer>
              
@@ -165,12 +183,27 @@ const ProductDetails = () => {
                 {name}
               </h1>
 
-              {/* Price */}
+              {/* Price Section with Discount Logic */}
               <div className="mb-4 sm:mb-6">
                 <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
-                  <span className="text-2xl sm:text-3xl font-bold text-brand-blue">
-                    {formatPrice(price)}
+                  {/* Current/Discounted Price */}
+                  <span className={`text-2xl sm:text-3xl font-bold text-brand-blue`}>
+                    {formatPrice(displayPrice)}
                   </span>
+                  
+                  {/* Original Price (if there's a discount) */}
+                  {hasOffer && originalPrice && (
+                    <span className="text-lg sm:text-xl text-gray-500 line-through">
+                      {formatPrice(originalPrice)}
+                    </span>
+                  )}
+                  
+                  {/* Discount Badge */}
+                  {hasOffer && (
+                    <span className="bg-red-100 text-red-600 text-xs sm:text-sm font-semibold px-2 py-1 rounded-full">
+                      Save {discountPercentage}%
+                    </span>
+                  )}
                 </div>
               </div>
 

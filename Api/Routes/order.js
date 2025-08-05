@@ -65,8 +65,8 @@ router.post("/confirm-order", verifyToken, async (req, res, next) => {
     for (const item of itemsFromClient) {
       const product = await Product.findById(item.id);
       if (!product) continue;
-
-      const itemTotal = product.price * item.quantity;
+      const price = product.offer ? product.discountPrice : product.price
+      const itemTotal = price * item.quantity;
       totalAmount += itemTotal;
 
       items.push({

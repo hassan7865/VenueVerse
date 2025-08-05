@@ -353,7 +353,8 @@ router.get("/by-user/:userId", async (req, res, next) => {
 
     const bookings = await Booking.find({ userId })
       .populate("venueId")
-      .populate("serviceId");
+      .populate("serviceId")
+      .sort({ createdAt: -1 })
 
     const formatted = bookings.map((booking) => {
       const obj = booking.toObject();
