@@ -8,7 +8,6 @@ import {
   MapPin,
   Users,
   Square,
-  DollarSign,
   Tag,
   FileText,
   Home,
@@ -723,7 +722,7 @@ const CreatePost = () => {
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                 <div className="p-6 border-b border-slate-100">
                   <div className="flex items-center space-x-3">
-                    <DollarSign className="w-5 h-5 text-slate-600" />
+                    <FaMoneyBillWave className="w-5 h-5 text-slate-600" />
                     <h2 className="text-lg font-semibold text-slate-900">
                       Pricing
                     </h2>
